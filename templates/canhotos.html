@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Canhotos</title>
+
+<style>
+body{
+    font-family: Arial;
+    background:#f4f4f4;
+    padding:20px;
+}
+
+.container{
+    max-width:700px;
+    margin:auto;
+    background:#fff;
+    padding:20px;
+    border-radius:10px;
+}
+
+input, button{
+    width:100%;
+    padding:10px;
+    margin:5px 0;
+}
+
+button{
+    background:#007bff;
+    color:white;
+    border:none;
+    cursor:pointer;
+}
+
+li{
+    padding:8px;
+    border-bottom:1px solid #ddd;
+}
+</style>
+
+</head>
+<body>
+
+<div class="container">
+
+<h1>📄 Canhotos</h1>
+
+<form id="form">
+
+<input placeholder="Nota Fiscal" id="nf" required>
+<input placeholder="Cliente" id="cliente" required>
+<input placeholder="Rota" id="rota" required>
+<input placeholder="Carga" id="carga" required>
+
+<input type="date" id="data">
+
+<button type="submit">Salvar</button>
+
+</form>
+
+<ul id="lista"></ul>
+
+</div>
+
+<script>
+
+const API = "/api/canhotos";
+
+const form = document.getElementById("form");
+const lista = document.getElementById("lista");
+
+async function carregar(){
+    try{
+        const res = await fetch(API);
+        const dados = await res.json();
+
+        lista.innerHTML = "";
+
+        dados.forEach(c => {
+            lista.innerHTML += `
+                <li>
+                    <b>NF:</b> ${c.nota_fiscal} <br>
+                    <b>Cliente:</b> ${c.cliente} <br>
+                    <b>Rota:</b> ${c.rota} <br>
+                    <b>Carga:</b> ${c.carga} <br>
+                    <b>Status:</b> ${c.status}
+                </li>
+            `;
+        });
+
+    }catch(err){
+        console.log("Erro ao carregar:", err);
+    }
+}
+
+form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    try{
+        await fetch(API, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                nota_fiscal: nf.value,
+                cliente: cliente.value,
+                rota: rota.value,
+                carga: carga.value,
+                data_entrega: data.value
+            })
+        });
+
+        form.reset();
+        carregar();
+
+    }catch(err){
+        console.log("Erro ao salvar:", err);
+    }
+});
+
+carregar();
+
+</script>
+
+</body>
+</html>

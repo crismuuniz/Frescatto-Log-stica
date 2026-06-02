@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Roteiros</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f4f4;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        input, button {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0;
+            box-sizing: border-box;
+        }
+
+        button {
+            cursor: pointer;
+            font-weight: bold;
+            border-radius: 5px;
+        }
+
+        .btn-salvar {
+            background: #28a745;
+            color: white;
+            border: none;
+        }
+
+        .btn-cancelar {
+            background: #6c757d;
+            color: white;
+            border: none;
+            display: none; /* Oculto por padrão */
+        }
+
+        ul {
+            padding: 0;
+        }
+
+        li {
+            list-style: none;
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            background: #fff;
+        }
+
+        .acoes {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .btn-editar {
+            background: #ffc107;
+            border: none;
+            color: #000;
+        }
+
+        .btn-excluir {
+            background: #dc3545;
+            color: white;
+            border: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+    <h1>🛣️ Roteiros</h1>
+
+    <form id="form">
+        <input placeholder="Motorista" id="motorista" required>
+        <input placeholder="Veículo" id="veiculo" required>
+        <input placeholder="Código do roteiro" id="codigo_roteiro" required>
+        <input type="date" id="data_saida" required>
+        <input placeholder="Destinos (separados por vírgula)" id="destinos">
+        
+        <button type="submit" id="btn-submit" class="btn-salvar">Salvar Roteiro</button>
+        <button type="button" id="btn-cancelar" class="btn-cancelar" onclick="limparEdicao()">Cancelar Edição</button>
+    </form>
+
+    <hr>
+
+    <ul id="lista"></ul>
+
+</div>
+
+<script>
+    const API = "/api/roteiros";
+
+    const form = document.getElementById("form");
+    const lista = document.getElementById("lista");
+    const btnSubmit = document.getElementById("btn-submit");
+    const btnCancelar = document.getElementById("btn-cancelar");
+
+    // Guarda globalmente se estamos editando alguém
+    let idEdicao = null; 
+    let roteirosCarregados = [];
+
+    async function carregar() {
+        const res = await fetch(API);
+        roteirosCarregados = await res.json();
+
+        lista.innerHTML = "";
+
+        roteirosCarregados.forEach(r => {
+            lista.innerHTML += `
+            <li>
+                <b>Motorista:</b> ${r.motorista}<br>
+                <b>Veículo:</b> ${r.veiculo}<br>
+                <b>Código:</b> ${r.codigo_roteiro || ""}<br>
+                <b>Data:</b> ${r.data_saida}<br>
+                <b>Destinos:</b> ${r.destinos || "Nenhum informado"}<br>
+                
+                <div class="acoes">
+                    <button class="btn-editar" onclick="prepararEdicao(${r.id})">Editar</button>
+                    <button class="btn-excluir" onclick="excluirRegistro(${r.id})">Excluir</button>
+                </div>
+            </li>
+            `;
+        });
+    }
+
+    form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const payload = {
+            motorista: document.getElementById("motorista").value,
+            veiculo: document.getElementById("veiculo").value,
+            codigo_roteiro: document.getElementById("codigo_roteiro").value,
+            data_saida: document.getElementById("data_saida").value,
+            destinos: document.getElementById("destinos").value
+        };
+
+        if (idEdicao !== null) {
+            // Se idEdicao tem valor, faz um PUT (Atualizar)
+            await fetch(`${API}/${idEdicao}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+            limparEdicao();
+        } else {
+            // Caso contrário, faz um POST (Criar novo)
+            await fetch(API, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+        }
+
+        form.reset();
+        carregar();
+    });
+
+    function prepararEdicao(id) {
+        // Encontra os dados locais do roteiro selecionado para evitar requisições extras
+        const roteiro = roteirosCarregados.find(r => r.id === id);
+        if (!roteiro) return;
+
+        idEdicao = id;
+
+        // Preenche os inputs com os valores atuais do banco
+        document.getElementById("motorista").value = roteiro.motorista;
+        document.getElementById("veiculo").value = roteiro.veiculo;
+        document.getElementById("codigo_roteiro").value = roteiro.codigo_roteiro;
+        document.getElementById("data_saida").value = roteiro.data_saida;
+        document.getElementById("destinos").value = roteiro.destinos || "";
+
+        // Altera a interface visual
+        btnSubmit.innerText = "Atualizar Roteiro";
+        btnSubmit.style.background = "#ffc107";
+        btnSubmit.style.color = "#000";
+        btnCancelar.style.display = "block";
+        
+        // Rola a página para o topo onde está o formulário
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function limparEdicao() {
+        idEdicao = null;
+        form.reset();
+        btnSubmit.innerText = "Salvar Roteiro";
+        btnSubmit.style.background = "#28a745";
+        btnSubmit.style.color = "white";
+        btnCancelar.style.display = "none";
+    }
+
+    async function excluirRegistro(id) {
+        if (idEdicao === id) {
+            alert("Não é possível excluir um roteiro enquanto ele está sendo editado.");
+            return;
+        }
+
+        const confirmar = confirm("Deseja realmente excluir este roteiro?");
+        if (!confirmar) return;
+
+        await fetch(`${API}/${id}`, {
+            method: "DELETE"
+        });
+
+        carregar();
+    }
+
+    // Inicialização
+    carregar();
+</script>
+
+</body>
+</html>

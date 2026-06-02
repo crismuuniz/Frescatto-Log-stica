@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Fretes</title>
+</head>
+<body>
+
+<h1>Fretes</h1>
+
+<form id="form">
+
+<input placeholder="Rota" id="rota"><br><br>
+<input placeholder="Placa" id="placa"><br><br>
+<input type="date" id="data"><br><br>
+
+<input placeholder="Romaneio" id="romaneio"><br><br>
+<input placeholder="Peso" id="peso"><br><br>
+
+<input placeholder="Modelo Veículo" id="modelo"><br><br>
+<input placeholder="Tipo Veículo" id="tipo"><br><br>
+
+<input placeholder="Acréscimo" id="acrescimo"><br><br>
+
+<input placeholder="Transportadora" id="transportadora"><br><br>
+<input placeholder="Mês Referência" id="mes"><br><br>
+<input placeholder="Valor Total" id="valor"><br><br>
+<input placeholder="Qtd Entregas" id="qtd"><br><br>
+
+<button>Salvar</button>
+
+</form>
+
+<hr>
+
+<ul id="lista"></ul>
+
+<script>
+
+const API = "/api/fretes";
+
+async function carregar() {
+
+    const res = await fetch(API);
+    const dados = await res.json();
+
+    lista.innerHTML = "";
+
+    dados.forEach(f => {
+        lista.innerHTML += `
+        <li>
+            <b>${f.rota}</b> | ${f.placa} | ${f.peso}kg | R$ ${f.valor_total}
+        </li>`;
+    });
+}
+
+form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    await fetch(API, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            rota: rota.value,
+            placa: placa.value,
+            data: data.value,
+            romaneio: romaneio.value,
+            peso: peso.value,
+            modelo_veiculo: modelo.value,
+            tipo_veiculo: tipo.value,
+            acrescimo: acrescimo.value || 0,
+            transportadora: transportadora.value,
+            mes_referencia: mes.value,
+            valor_total: valor.value,
+            quantidade_entregas: qtd.value
+        })
+    });
+
+    form.reset();
+    carregar();
+});
+
+carregar();
+
+</script>
+
+</body>
+</html>

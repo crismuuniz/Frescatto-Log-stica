@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Devoluções</title>
+</head>
+<body>
+
+<h1>Devoluções</h1>
+
+<form id="form">
+
+<input placeholder="NF" id="nf">
+
+<input placeholder="Cliente" id="cliente">
+
+<input placeholder="Motivo" id="motivo">
+
+<button>Salvar</button>
+
+</form>
+
+<ul id="lista"></ul>
+
+<script>
+
+const API="/devolucoes";
+
+async function carregar(){
+
+const res=await fetch(API);
+
+const dados=await res.json();
+
+lista.innerHTML="";
+
+dados.forEach(d=>{
+lista.innerHTML += `
+<li>
+NF ${d.nota_fiscal}
+-
+${d.cliente}
+-
+${d.status}
+</li>`;
+});
+
+}
+
+form.addEventListener("submit",async(e)=>{
+
+e.preventDefault();
+
+await fetch(API,{
+method:"POST",
+headers:{
+"Content-Type":"application/json"
+},
+body:JSON.stringify({
+nota_fiscal:nf.value,
+cliente:cliente.value,
+motivo:motivo.value
+})
+});
+
+form.reset();
+
+carregar();
+
+});
+
+carregar();
+
+</script>
+
+</body>
+</html>

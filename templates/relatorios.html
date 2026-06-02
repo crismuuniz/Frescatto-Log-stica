@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Relatório do Sistema</title>
+
+<style>
+body{
+    font-family: Arial;
+    padding: 30px;
+    background: #f4f4f4;
+}
+
+.container{
+    max-width: 900px;
+    margin: auto;
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+}
+
+h1{
+    color: #333;
+}
+
+h2{
+    margin-top: 25px;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 5px;
+}
+
+ul{
+    list-style: none;
+    padding: 0;
+}
+
+li{
+    padding: 8px;
+    border-bottom: 1px solid #eee;
+}
+
+.badge{
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 5px;
+    background: #007bff;
+    color: white;
+    font-size: 12px;
+}
+
+.empty{
+    color: #999;
+    font-style: italic;
+    padding: 10px 0;
+}
+</style>
+
+</head>
+<body>
+
+<div class="container">
+
+<h1>📊 Relatório do Sistema</h1>
+
+<p><span class="badge">{{ data }}</span></p>
+
+<!-- CANHOTOS -->
+<h2>📄 Canhotos ({{ canhotos|length if canhotos else 0 }})</h2>
+
+<ul>
+{% if canhotos %}
+    {% for c in canhotos %}
+    <li>
+        <b>NF:</b> {{ c.nota_fiscal }} |
+        <b>Cliente:</b> {{ c.cliente }} |
+        <b>Rota:</b> {{ c.rota }} |
+        <b>Carga:</b> {{ c.carga }} |
+        <b>Status:</b> {{ c.status }}
+    </li>
+    {% endfor %}
+{% else %}
+    <div class="empty">Nenhum canhoto encontrado</div>
+{% endif %}
+</ul>
+
+<!-- FRETES -->
+<h2>🚚 Fretes ({{ fretes|length if fretes else 0 }})</h2>
+
+<ul>
+{% if fretes %}
+    {% for f in fretes %}
+    <li>
+        <b>Rota:</b> {{ f.rota }} |
+        <b>Placa:</b> {{ f.placa }} |
+        <b>Peso:</b> {{ f.peso }} kg |
+        <b>Valor:</b> R$ {{ f.valor_total }}
+    </li>
+    {% endfor %}
+{% else %}
+    <div class="empty">Nenhum frete encontrado</div>
+{% endif %}
+</ul>
+
+<!-- ROTEIROS -->
+<h2>🛣 Roteiros ({{ roteiros|length if roteiros else 0 }})</h2>
+
+<ul>
+{% if roteiros %}
+    {% for r in roteiros %}
+    <li>
+        <b>Motorista:</b> {{ r.motorista }} |
+        <b>Veículo:</b> {{ r.veiculo }} |
+        <b>Data:</b> {{ r.data_saida }}
+    </li>
+    {% endfor %}
+{% else %}
+    <div class="empty">Nenhum roteiro encontrado</div>
+{% endif %}
+</ul>
+
+<!-- DEVOLUÇÕES -->
+<h2>📦 Devoluções ({{ devolucoes|length if devolucoes else 0 }})</h2>
+
+<ul>
+{% if devolucoes %}
+    {% for d in devolucoes %}
+    <li>
+        <b>NF:</b> {{ d.nota_fiscal }} |
+        <b>Motivo:</b> {{ d.motivo }} |
+        <b>Status:</b> {{ d.status }}
+    </li>
+    {% endfor %}
+{% else %}
+    <div class="empty">Nenhuma devolução encontrada</div>
+{% endif %}
+</ul>
+
+</div>
+
+</body>
+</html>

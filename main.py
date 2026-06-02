@@ -32,7 +32,7 @@ def init_db():
     conn = get_db()
     cursor = conn.cursor()
 
-    # TABELA UNIFICADA: Substitui o formato antigo pela estrutura real da planilha de rotas
+    # TABELA UNIFICADA: Estrutura real da planilha de rotas
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS rotas (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -120,10 +120,13 @@ def relatorios_page():
     )
 
 # ==================================
-# API: NOVO MÓDULO DE ROTAS (BASEADO NA PLANILHA)
+# API: MÓDULO UNIFICADO DE ROTAS E FRETES
 # ==================================
 
+# GET: Retorna as rotas (Atende os três endpoints para evitar 404)
 @app.route("/api/rotas", methods=["GET"])
+@app.route("/api/roteiros", methods=["GET"])
+@app.route("/api/fretes", methods=["GET"])
 def get_rotas():
     conn = get_db()
     rows = conn.execute("SELECT * FROM rotas").fetchall()
@@ -131,7 +134,10 @@ def get_rotas():
     return jsonify([dict(r) for r in rows])
 
 
+# POST: Salva novas rotas (Faz o de/para inteligente se vier do form antigo de roteiros ou fretes)
 @app.route("/api/rotas", methods=["POST"])
+@app.route("/api/roteiros", methods=["POST"])
+@app.route("/api/fretes", methods=["POST"])
 def add_rota():
     dados = request.json
     conn = get_db()
@@ -142,29 +148,32 @@ def add_rota():
             volume, valor_carga, km, pedagio, diaria, valor_frete
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """, (
-        dados.get("carga"),
-        dados.get("data_carga"),
+        dados.get("carga") or dados.get("rota"), # Trata 'rota' vindo do módulo de fretes antigo como número da carga
+        dados.get("data_carga") or dados.get("data"),
         dados.get("motorista"),
         dados.get("placa"),
-        dados.get("veiculo"),
-        dados.get("codigo_roteiro"),
+        dados.get("veiculo") or dados.get("tipo_veiculo"),
+        dados.get("codigo_roteiro") or dados.get("romaneio"),
         dados.get("descricao_rota"),
         dados.get("valor_coleta", 0),
-        dados.get("quantidade_entregas", 0),
+        dados.get("quantidade_entregas") or dados.get("quantidade_entregas", 0),
         dados.get("peso", 0),
         dados.get("volume", 0),
         dados.get("valor_carga", 0),
         dados.get("km", 0),
         dados.get("pedagio", 0),
         dados.get("diaria", 0),
-        dados.get("valor_frete", 0)
+        dados.get("valor_frete") or dados.get("valor_total", 0)
     ))
     conn.commit()
     conn.close()
     return jsonify({"status": "ok"}), 201
 
 
+# PUT: Atualiza as informações da rota/roteiro/frete
 @app.route("/api/rotas/<int:id>", methods=["PUT"])
+@app.route("/api/roteiros/<int:id>", methods=["PUT"])
+@app.route("/api/fretes/<int:id>", methods=["PUT"])
 def update_rota(id):
     dados = request.json
     conn = get_db()
@@ -176,20 +185,33 @@ def update_rota(id):
             km = ?, pedagio = ?, diaria = ?, valor_frete = ?
         WHERE id = ?
     """, (
-        dados.get("carga"), dados.get("data_carga"), dados.get("motorista"),
-        dados.get("placa"), dados.get("veiculo"), dados.get("codigo_roteiro"),
-        dados.get("descricao_rota"), dados.get("valor_coleta", 0),
-        dados.get("quantidade_entregas", 0), dados.get("peso", 0),
-        dados.get("volume", 0), dados.get("valor_carga", 0),
-        dados.get("km", 0), dados.get("pedagio", 0), dados.get("diaria", 0),
-        dados.get("valor_frete", 0), id
+        dados.get("carga") or dados.get("rota"),
+        dados.get("data_carga") or dados.get("data"),
+        dados.get("motorista"),
+        dados.get("placa"),
+        dados.get("veiculo") or dados.get("tipo_veiculo"),
+        dados.get("codigo_roteiro") or dados.get("romaneio"),
+        dados.get("descricao_rota"),
+        dados.get("valor_coleta", 0),
+        dados.get("quantidade_entregas") or dados.get("quantidade_entregas", 0),
+        dados.get("peso", 0),
+        dados.get("volume", 0),
+        dados.get("valor_carga", 0),
+        dados.get("km", 0),
+        dados.get("pedagio", 0),
+        dados.get("diaria", 0),
+        dados.get("valor_frete") or dados.get("valor_total", 0),
+        id
     ))
     conn.commit()
     conn.close()
     return jsonify({"status": "ok"})
 
 
+# DELETE: Remove o registro de rotas
 @app.route("/api/rotas/<int:id>", methods=["DELETE"])
+@app.route("/api/roteiros/<int:id>", methods=["DELETE"])
+@app.route("/api/fretes/<int:id>", methods=["DELETE"])
 def delete_rota(id):
     conn = get_db()
     conn.execute("DELETE FROM rotas WHERE id = ?", (id,))
@@ -198,7 +220,7 @@ def delete_rota(id):
     return jsonify({"status": "ok"})
 
 # ==================================
-# API: CANHOTOS E DEVOLUÇÕES
+# API: CANHOTOS (CRUD COMPLETO)
 # ==================================
 
 @app.route("/api/canhotos", methods=["GET"])
@@ -219,12 +241,41 @@ def add_canhoto():
     """, (
         dados.get("nota_fiscal"), dados.get("cliente"),
         dados.get("carga"), dados.get("data_entrega"),
-        dados.get("status", "Recebido")
+        dados.get("status", "Pendente")
     ))
     conn.commit()
     conn.close()
     return jsonify({"status": "ok"}), 201
 
+
+@app.route("/api/canhotos/<int:id>", methods=["PUT"])
+def update_canhoto(id):
+    dados = request.json
+    conn = get_db()
+    conn.execute("""
+        UPDATE canhotos SET nota_fiscal = ?, cliente = ?, carga = ?, data_entrega = ?, status = ?
+        WHERE id = ?
+    """, (
+        dados.get("nota_fiscal"), dados.get("cliente"),
+        dados.get("carga"), dados.get("data_entrega"),
+        dados.get("status"), id
+    ))
+    conn.commit()
+    conn.close()
+    return jsonify({"status": "ok"})
+
+
+@app.route("/api/canhotos/<int:id>", methods=["DELETE"])
+def delete_canhoto(id):
+    conn = get_db()
+    conn.execute("DELETE FROM canhotos WHERE id = ?", (id,))
+    conn.commit()
+    conn.close()
+    return jsonify({"status": "ok"})
+
+# ==================================
+# API: DEVOLUÇÕES (CRUD COMPLETO)
+# ==================================
 
 @app.route("/api/devolucoes", methods=["GET"])
 def get_devolucoes():
@@ -249,6 +300,32 @@ def add_devolucao():
     conn.commit()
     conn.close()
     return jsonify({"status": "ok"}), 201
+
+
+@app.route("/api/devolucoes/<int:id>", methods=["PUT"])
+def update_devolucao(id):
+    dados = request.json
+    conn = get_db()
+    conn.execute("""
+        UPDATE devolucoes SET nota_fiscal = ?, cliente = ?, motivo = ?, data = ?, status = ?
+        WHERE id = ?
+    """, (
+        dados.get("nota_fiscal"), dados.get("cliente"),
+        dados.get("motivo"), dados.get("data"),
+        dados.get("status"), id
+    ))
+    conn.commit()
+    conn.close()
+    return jsonify({"status": "ok"})
+
+
+@app.route("/api/devolucoes/<int:id>", methods=["DELETE"])
+def delete_devolucao(id):
+    conn = get_db()
+    conn.execute("DELETE FROM devolucoes WHERE id = ?", (id,))
+    conn.commit()
+    conn.close()
+    return jsonify({"status": "ok"})
 
 # ==================================
 # INTEGRAÇÃO: PROCESSAMENTO DE IMAGEM (OCR)

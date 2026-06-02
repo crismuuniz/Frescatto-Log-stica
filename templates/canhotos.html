@@ -1,126 +1,392 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<title>Canhotos</title>
+    <meta charset="UTF-8">
+    <title>Controle de Canhotos - Frescatto</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #f1f2f6;
+            color: #2f3542;
+            padding: 20px;
+            margin: 0;
+        }
 
-<style>
-body{
-    font-family: Arial;
-    background:#f4f4f4;
-    padding:20px;
-}
+        .container {
+            max-width: 1000px;
+            margin: auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
 
-.container{
-    max-width:700px;
-    margin:auto;
-    background:#fff;
-    padding:20px;
-    border-radius:10px;
-}
+        h1 {
+            color: #c00000; /* Vermelho Frescatto */
+            margin-top: 0;
+            border-bottom: 2px solid #c00000;
+            padding-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
 
-input, button{
-    width:100%;
-    padding:10px;
-    margin:5px 0;
-}
+        h2 {
+            margin-top: 30px;
+            color: #2f3542;
+            font-size: 1.2rem;
+        }
 
-button{
-    background:#007bff;
-    color:white;
-    border:none;
-    cursor:pointer;
-}
+        /* Form em Grid Responsivo */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
 
-li{
-    padding:8px;
-    border-bottom:1px solid #ddd;
-}
-</style>
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
 
+        .form-group label {
+            font-size: 12px;
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #57606f;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ced6e0;
+            border-radius: 5px;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+
+        input:focus, select:focus {
+            border-color: #c00000;
+            outline: none;
+        }
+
+        .btn-container {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        button {
+            padding: 12px 20px;
+            font-weight: bold;
+            border-radius: 5px;
+            cursor: pointer;
+            border: none;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+
+        .btn-salvar {
+            background: #2ed573;
+            color: white;
+            flex: 2;
+        }
+
+        .btn-salvar:hover { background: #26af5f; }
+
+        .btn-cancelar {
+            background: #747d8c;
+            color: white;
+            flex: 1;
+            display: none;
+        }
+
+        .btn-cancelar:hover { background: #57606f; }
+
+        /* Tabela de Dados */
+        .table-responsive {
+            overflow-x: auto;
+            margin-top: 15px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+            text-align: left;
+        }
+
+        th {
+            background: #2f3542; /* Grafite */
+            color: white;
+            padding: 12px;
+            font-weight: 600;
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #e4e7eb;
+        }
+
+        tr:nth-child(even) td {
+            background: #f8f9fa; /* Zebra */
+        }
+
+        .badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            color: white;
+            display: inline-block;
+        }
+
+        .badge-pendente { background: #ffa502; }
+        .badge-recebido { background: #2ed573; }
+        .badge-ressalva { background: #ff4757; }
+
+        .acoes {
+            display: flex;
+            gap: 5px;
+            justify-content: center;
+        }
+
+        .btn-editar {
+            background: #ffa502;
+            color: white;
+            padding: 5px 10px;
+            font-size: 12px;
+        }
+
+        .btn-excluir {
+            background: #ff4757;
+            color: white;
+            padding: 5px 10px;
+            font-size: 12px;
+        }
+
+        .empty {
+            color: #a4b0be;
+            font-style: italic;
+            padding: 20px;
+            text-align: center;
+            background: #f8f9fa;
+            border: 1px dashed #ced6e0;
+            border-radius: 6px;
+        }
+
+        .negrito {
+            font-weight: bold;
+        }
+    </style>
 </head>
 <body>
 
 <div class="container">
 
-<h1>📄 Canhotos</h1>
+    <h1>📄 Controle de Retorno de Canhotos</h1>
 
-<form id="form">
+    <form id="form">
+        <div class="form-grid">
+            <div class="form-group">
+                <label>NOTA FISCAL (NF)</label>
+                <input type="text" id="nf" placeholder="Ex: 104523" required>
+            </div>
+            <div class="form-group">
+                <label>Nº DA CARGA</label>
+                <input type="text" id="carga" placeholder="Ex: 457" required>
+            </div>
+            <div class="form-group">
+                <label>ROTA</label>
+                <input type="text" id="rota" placeholder="Ex: RJ-01 / SUL" required>
+            </div>
+            <div class="form-group">
+                <label>CLIENTE / DESTINATÁRIO</label>
+                <input type="text" id="cliente" placeholder="Nome do Cliente" required>
+            </div>
+            <div class="form-group">
+                <label>DATA DE ENTREGA</label>
+                <input type="date" id="data">
+            </div>
+            <div class="form-group">
+                <label>STATUS DO CANHOTO</label>
+                <select id="status" required>
+                    <option value="Pendente">Pendente</option>
+                    <option value="Recebido">Recebido (OK)</option>
+                    <option value="Com Ressalva">Com Ressalva</option>
+                </select>
+            </div>
+        </div>
 
-<input placeholder="Nota Fiscal" id="nf" required>
-<input placeholder="Cliente" id="cliente" required>
-<input placeholder="Rota" id="rota" required>
-<input placeholder="Carga" id="carga" required>
+        <div class="btn-container">
+            <button type="submit" id="btn-submit" class="btn-salvar">Salvar Canhoto</button>
+            <button type="button" id="btn-cancelar" class="btn-cancelar" onclick="limparEdicao()">Cancelar Edição</button>
+        </div>
+    </form>
 
-<input type="date" id="data">
-
-<button type="submit">Salvar</button>
-
-</form>
-
-<ul id="lista"></ul>
+    <h2>📋 Relatório de Canhotos Digitalizados / Retornados</h2>
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    <th>NF</th>
+                    <th>Carga</th>
+                    <th>Rota</th>
+                    <th>Cliente</th>
+                    <th>Data Entrega</th>
+                    <th>Status</th>
+                    <th style="width: 140px; text-align: center;">Ações</th>
+                </tr>
+            </thead>
+            <tbody id="lista"></tbody>
+        </table>
+    </div>
 
 </div>
 
 <script>
+    const API = "/api/canhotos";
 
-const API = "/api/canhotos";
+    const form = document.getElementById("form");
+    const lista = document.getElementById("lista");
+    const btnSubmit = document.getElementById("btn-submit");
+    const btnCancelar = document.getElementById("btn-cancelar");
 
-const form = document.getElementById("form");
-const lista = document.getElementById("lista");
+    let idEdicao = null;
+    let canhotosCarregados = [];
 
-async function carregar(){
-    try{
-        const res = await fetch(API);
-        const dados = await res.json();
+    // Define a data de hoje por padrão
+    document.getElementById('data').valueAsDate = new Date();
 
-        lista.innerHTML = "";
+    async function carregar() {
+        try {
+            const res = await fetch(API);
+            canhotosCarregados = await res.json();
 
-        dados.forEach(c => {
-            lista.innerHTML += `
-                <li>
-                    <b>NF:</b> ${c.nota_fiscal} <br>
-                    <b>Cliente:</b> ${c.cliente} <br>
-                    <b>Rota:</b> ${c.rota} <br>
-                    <b>Carga:</b> ${c.carga} <br>
-                    <b>Status:</b> ${c.status}
-                </li>
-            `;
-        });
+            lista.innerHTML = "";
 
-    }catch(err){
-        console.log("Erro ao carregar:", err);
+            if (canhotosCarregados.length === 0) {
+                lista.innerHTML = `<tr><td colspan="7" class="empty">Nenhum canhoto aguardando ou registrado.</td></tr>`;
+                return;
+            }
+
+            canhotosCarregados.forEach(c => {
+                // Ajuste dinâmico de cores dos Badges de Status
+                let badgeClass = "badge-pendente";
+                if (c.status === "Recebido" || c.status === "OK") badgeClass = "badge-recebido";
+                if (c.status === "Com Ressalva") badgeClass = "badge-ressalva";
+
+                lista.innerHTML += `
+                <tr>
+                    <td class="negrito">${c.nota_fiscal}</td>
+                    <td><span class="negrito" style="color: #c00000;">${c.carga}</span></td>
+                    <td>${c.rota}</td>
+                    <td>${c.cliente}</td>
+                    <td>${c.data_entrega || "-"}</td>
+                    <td><span class="badge ${badgeClass}">${c.status || "Pendente"}</span></td>
+                    <td>
+                        <div class="acoes">
+                            <button class="btn-editar" onclick="prepararEdicao(${c.id})">Editar</button>
+                            <button class="btn-excluir" onclick="excluirRegistro(${c.id})">Excluir</button>
+                        </div>
+                    </td>
+                </tr>`;
+            });
+        } catch (error) {
+            console.error("Erro ao carregar canhotos:", error);
+            lista.innerHTML = `<tr><td colspan="7" class="empty" style="color: #ff4757;">Erro de comunicação com o servidor.</td></tr>`;
+        }
     }
-}
 
-form.addEventListener("submit", async (e) => {
-    e.preventDefault();
+    form.addEventListener("submit", async (e) => {
+        e.preventDefault();
 
-    try{
-        await fetch(API, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                nota_fiscal: nf.value,
-                cliente: cliente.value,
-                rota: rota.value,
-                carga: carga.value,
-                data_entrega: data.value
-            })
-        });
+        const payload = {
+            nota_fiscal: document.getElementById("nf").value,
+            carga: document.getElementById("carga").value,
+            rota: document.getElementById("rota").value,
+            cliente: document.getElementById("cliente").value,
+            data_entrega: document.getElementById("data").value,
+            status: document.getElementById("status").value
+        };
 
+        try {
+            if (idEdicao !== null) {
+                // Modo Edição (PUT)
+                await fetch(`${API}/${idEdicao}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
+                limparEdicao();
+            } else {
+                // Modo Inserção (POST)
+                await fetch(API, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
+            }
+
+            form.reset();
+            document.getElementById('data').valueAsDate = new Date();
+            carregar();
+        } catch (error) {
+            alert("Erro ao tentar salvar os dados do canhoto.");
+        }
+    });
+
+    function prepararEdicao(id) {
+        const canhoto = canhotosCarregados.find(c => c.id === id);
+        if (!canhoto) return;
+
+        idEdicao = id;
+
+        document.getElementById("nf").value = canhoto.nota_fiscal;
+        document.getElementById("carga").value = canhoto.carga;
+        document.getElementById("rota").value = canhoto.rota;
+        document.getElementById("cliente").value = canhoto.cliente;
+        if (canhoto.data_entrega) document.getElementById("data").value = canhoto.data_entrega;
+        document.getElementById("status").value = canhoto.status || "Pendente";
+
+        btnSubmit.innerText = "Atualizar Canhoto";
+        btnSubmit.style.background = "#ffa502";
+        btnCancelar.style.display = "block";
+
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function limparEdicao() {
+        idEdicao = null;
         form.reset();
-        carregar();
-
-    }catch(err){
-        console.log("Erro ao salvar:", err);
+        document.getElementById('data').valueAsDate = new Date();
+        btnSubmit.innerText = "Salvar Canhoto";
+        btnSubmit.style.background = "#2ed573";
+        btnCancelar.style.display = "none";
     }
-});
 
-carregar();
+    async function excluirRegistro(id) {
+        if (idEdicao === id) {
+            alert("Cancele a edição antes de realizar a exclusão deste item.");
+            return;
+        }
 
+        const confirmar = confirm("Deseja realmente remover o registro deste canhoto?");
+        if (!confirmar) return;
+
+        try {
+            await fetch(`${API}/${id}`, {
+                method: "DELETE"
+            });
+            carregar();
+        } catch (error) {
+            alert("Não foi possível excluir o item.");
+        }
+    }
+
+    // Inicialização da listagem
+    carregar();
 </script>
 
 </body>

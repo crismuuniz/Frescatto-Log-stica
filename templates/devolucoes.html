@@ -1,76 +1,385 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<title>Devoluções</title>
+    <meta charset="UTF-8">
+    <title>Controle de Devoluções - Frescatto</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #f1f2f6;
+            color: #2f3542;
+            padding: 20px;
+            margin: 0;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        h1 {
+            color: #c00000; /* Vermelho Frescatto */
+            margin-top: 0;
+            border-bottom: 2px solid #c00000;
+            padding-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        h2 {
+            margin-top: 30px;
+            color: #2f3542;
+            font-size: 1.2rem;
+        }
+
+        /* Form em Grid Responsivo */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            font-size: 12px;
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #57606f;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ced6e0;
+            border-radius: 5px;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+
+        input:focus, select:focus {
+            border-color: #c00000;
+            outline: none;
+        }
+
+        .btn-container {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        button {
+            padding: 12px 20px;
+            font-weight: bold;
+            border-radius: 5px;
+            cursor: pointer;
+            border: none;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+
+        .btn-salvar {
+            background: #2ed573;
+            color: white;
+            flex: 2;
+        }
+
+        .btn-salvar:hover { background: #26af5f; }
+
+        .btn-cancelar {
+            background: #747d8c;
+            color: white;
+            flex: 1;
+            display: none;
+        }
+
+        .btn-cancelar:hover { background: #57606f; }
+
+        /* Tabela Dinâmica de Devoluções */
+        .table-responsive {
+            overflow-x: auto;
+            margin-top: 15px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+            text-align: left;
+        }
+
+        th {
+            background: #2f3542; /* Grafite */
+            color: white;
+            padding: 12px;
+            font-weight: 600;
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #e4e7eb;
+        }
+
+        tr:nth-child(even) td {
+            background: #f8f9fa; /* Efeito Zebra */
+        }
+
+        .badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            color: white;
+            display: inline-block;
+        }
+
+        .badge-pendente { background: #ff4757; }
+        .badge-analise { background: #ffa502; }
+        .badge-concluido { background: #2ed573; }
+
+        .acoes {
+            display: flex;
+            gap: 5px;
+            justify-content: center;
+        }
+
+        .btn-editar {
+            background: #ffa502;
+            color: white;
+            padding: 5px 10px;
+            font-size: 12px;
+        }
+
+        .btn-excluir {
+            background: #ff4757;
+            color: white;
+            padding: 5px 10px;
+            font-size: 12px;
+        }
+
+        .empty {
+            color: #a4b0be;
+            font-style: italic;
+            padding: 20px;
+            text-align: center;
+            background: #f8f9fa;
+            border: 1px dashed #ced6e0;
+            border-radius: 6px;
+        }
+
+        .negrito {
+            font-weight: bold;
+        }
+    </style>
 </head>
 <body>
 
-<h1>Devoluções</h1>
+<div class="container">
 
-<form id="form">
+    <h1>📦 Controle de Devoluções de Mercadorias</h1>
 
-<input placeholder="NF" id="nf">
+    <form id="form">
+        <div class="form-grid">
+            <div class="form-group">
+                <label>NOTA FISCAL (NF)</label>
+                <input type="text" id="nf" placeholder="Ex: 104523" required>
+            </div>
+            <div class="form-group">
+                <label>CLIENTE / DESTINATÁRIO</label>
+                <input type="text" id="cliente" placeholder="Razão Social ou Nome" required>
+            </div>
+            <div class="form-group">
+                <label>MOTIVO DA DEVOLUÇÃO</label>
+                <input type="text" id="motivo" placeholder="Ex: Recusa por avaria / Atraso" required>
+            </div>
+            <div class="form-group">
+                <label>DATA DA OCORRÊNCIA</label>
+                <input type="date" id="data" required>
+            </div>
+            <div class="form-group">
+                <label>STATUS ATUAL</label>
+                <select id="status" required>
+                    <option value="Pendente">Pendente</option>
+                    <option value="Em Análise">Em Análise</option>
+                    <option value="Concluído">Concluído</option>
+                </select>
+            </div>
+        </div>
 
-<input placeholder="Cliente" id="cliente">
+        <div class="btn-container">
+            <button type="submit" id="btn-submit" class="btn-salvar">Salvar Devolução</button>
+            <button type="button" id="btn-cancelar" class="btn-cancelar" onclick="limparEdicao()">Cancelar Edição</button>
+        </div>
+    </form>
 
-<input placeholder="Motivo" id="motivo">
+    <h2>📋 Histórico de Ocorrências Lançadas</h2>
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    <th>NF</th>
+                    <th>Data</th>
+                    <th>Cliente</th>
+                    <th>Motivo da Ocorrência</th>
+                    <th>Status</th>
+                    <th style="width: 140px; text-align: center;">Ações</th>
+                </tr>
+            </thead>
+            <tbody id="lista"></tbody>
+        </table>
+    </div>
 
-<button>Salvar</button>
-
-</form>
-
-<ul id="lista"></ul>
+</div>
 
 <script>
+    // Ajustado para o padrão semântico de API do seu ecossistema (/api/devolucoes)
+    const API = "/api/devolucoes";
 
-const API="/devolucoes";
+    const form = document.getElementById("form");
+    const lista = document.getElementById("lista");
+    const btnSubmit = document.getElementById("btn-submit");
+    const btnCancelar = document.getElementById("btn-cancelar");
 
-async function carregar(){
+    let idEdicao = null;
+    let devolucoesCarregadas = [];
 
-const res=await fetch(API);
+    // Insere automaticamente a data atual no input ao abrir a página
+    document.getElementById('data').valueAsDate = new Date();
 
-const dados=await res.json();
+    async function carregar() {
+        try {
+            const res = await fetch(API);
+            devolucoesCarregadas = await res.json();
 
-lista.innerHTML="";
+            lista.innerHTML = "";
 
-dados.forEach(d=>{
-lista.innerHTML += `
-<li>
-NF ${d.nota_fiscal}
--
-${d.cliente}
--
-${d.status}
-</li>`;
-});
+            if (devolucoesCarregadas.length === 0) {
+                lista.innerHTML = `<tr><td colspan="6" class="empty">Nenhuma devolução registrada no período.</td></tr>`;
+                return;
+            }
 
-}
+            devolucoesCarregadas.forEach(d => {
+                // Seleção de estilo dinâmica baseada no Status informado
+                let badgeClass = "badge-pendente";
+                if (d.status === "Em Análise") badgeClass = "badge-analise";
+                if (d.status === "Concluído" || d.status === "Recebido") badgeClass = "badge-concluido";
 
-form.addEventListener("submit",async(e)=>{
+                lista.innerHTML += `
+                <tr>
+                    <td class="negrito">${d.nota_fiscal}</td>
+                    <td>${d.data || "-"}</td>
+                    <td>${d.cliente}</td>
+                    <td>${d.motivo}</td>
+                    <td><span class="badge ${badgeClass}">${d.status}</span></td>
+                    <td>
+                        <div class="acoes">
+                            <button class="btn-editar" onclick="prepararEdicao(${d.id})">Editar</button>
+                            <button class="btn-excluir" onclick="excluirRegistro(${d.id})">Excluir</button>
+                        </div>
+                    </td>
+                </tr>`;
+            });
+        } catch (error) {
+            console.error("Erro de conexão:", error);
+            lista.innerHTML = `<tr><td colspan="6" class="empty" style="color: #ff4757;">Erro ao carregar dados do servidor backend.</td></tr>`;
+        }
+    }
 
-e.preventDefault();
+    form.addEventListener("submit", async (e) => {
+        e.preventDefault();
 
-await fetch(API,{
-method:"POST",
-headers:{
-"Content-Type":"application/json"
-},
-body:JSON.stringify({
-nota_fiscal:nf.value,
-cliente:cliente.value,
-motivo:motivo.value
-})
-});
+        const payload = {
+            nota_fiscal: document.getElementById("nf").value,
+            cliente: document.getElementById("cliente").value,
+            motivo: document.getElementById("motivo").value,
+            data: document.getElementById("data").value,
+            status: document.getElementById("status").value
+        };
 
-form.reset();
+        try {
+            if (idEdicao !== null) {
+                // Atualização (PUT)
+                await fetch(`${API}/${idEdicao}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
+                limparEdicao();
+            } else {
+                // Novo Cadastro (POST)
+                await fetch(API, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
+            }
 
-carregar();
+            form.reset();
+            document.getElementById('data').valueAsDate = new Date(); // Reestabelece data de hoje
+            carregar();
+        } catch (error) {
+            alert("Houve um erro técnico ao processar a requisição.");
+        }
+    });
 
-});
+    function prepararEdicao(id) {
+        const dev = devolucoesCarregadas.find(d => d.id === id);
+        if (!dev) return;
 
-carregar();
+        idEdicao = id;
 
+        document.getElementById("nf").value = dev.nota_fiscal;
+        document.getElementById("cliente").value = dev.cliente;
+        document.getElementById("motivo").value = dev.motivo;
+        if (dev.data) document.getElementById("data").value = dev.data;
+        document.getElementById("status").value = dev.status || "Pendente";
+
+        btnSubmit.innerText = "Atualizar Ocorrência";
+        btnSubmit.style.background = "#ffa502";
+        btnCancelar.style.display = "block";
+
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function limparEdicao() {
+        idEdicao = null;
+        form.reset();
+        document.getElementById('data').valueAsDate = new Date();
+        btnSubmit.innerText = "Salvar Devolução";
+        btnSubmit.style.background = "#2ed573";
+        btnCancelar.style.display = "none";
+    }
+
+    async function excluirRegistro(id) {
+        if (idEdicao === id) {
+            alert("Finalize ou cancele a edição atual antes de excluir este registro.");
+            return;
+        }
+
+        const confirmar = confirm("Deseja permanentemente remover este registro de devolução?");
+        if (!confirmar) return;
+
+        try {
+            await fetch(`${API}/${id}`, {
+                method: "DELETE"
+            });
+            carregar();
+        } catch (error) {
+            alert("Erro ao tentar remover o item.");
+        }
+    }
+
+    // Inicializa a tabela ao carregar a página
+    carregar();
 </script>
 
 </body>

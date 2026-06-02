@@ -2,79 +2,162 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title>Roteiros</title>
-
+    <title>Gerenciamento de Rotas - Frescatto</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            background: #f4f4f4;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #f1f2f6;
+            color: #2f3542;
             padding: 20px;
+            margin: 0;
         }
 
         .container {
-            max-width: 900px;
+            max-width: 1100px;
             margin: auto;
             background: white;
-            padding: 20px;
+            padding: 30px;
             border-radius: 10px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
         }
 
-        input, button {
+        h1 {
+            color: #c00000; /* Vermelho Frescatto */
+            margin-top: 0;
+            border-bottom: 2px solid #c00000;
+            padding-bottom: 10px;
+        }
+
+        h2 {
+            margin-top: 30px;
+            color: #2f3542;
+            font-size: 1.2rem;
+        }
+
+        /* Form em Grid para organizar os 16 campos da planilha */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            font-size: 12px;
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #57606f;
+        }
+
+        input, select {
             width: 100%;
             padding: 10px;
-            margin: 5px 0;
+            border: 1px solid #ced6e0;
+            border-radius: 5px;
             box-sizing: border-box;
+            font-size: 14px;
         }
 
-        button {
-            cursor: pointer;
-            font-weight: bold;
-            border-radius: 5px;
+        input:focus {
+            border-color: #c00000;
+            outline: none;
         }
 
-        .btn-salvar {
-            background: #28a745;
-            color: white;
-            border: none;
-        }
-
-        .btn-cancelar {
-            background: #6c757d;
-            color: white;
-            border: none;
-            display: none; /* Oculto por padrão */
-        }
-
-        ul {
-            padding: 0;
-        }
-
-        li {
-            list-style: none;
-            border: 1px solid #ddd;
-            padding: 15px;
-            margin-bottom: 10px;
-            border-radius: 5px;
-            background: #fff;
-        }
-
-        .acoes {
+        .btn-container {
             display: flex;
             gap: 10px;
             margin-top: 10px;
         }
 
-        .btn-editar {
-            background: #ffc107;
+        button {
+            padding: 12px 20px;
+            font-weight: bold;
+            border-radius: 5px;
+            cursor: pointer;
             border: none;
-            color: #000;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+
+        .btn-salvar {
+            background: #2ed573;
+            color: white;
+            flex: 2;
+        }
+
+        .btn-salvar:hover { background: #26af5f; }
+
+        .btn-cancelar {
+            background: #747d8c;
+            color: white;
+            flex: 1;
+            display: none;
+        }
+
+        .btn-cancelar:hover { background: #57606f; }
+
+        /* Lista e Cards de Exibição */
+        ul {
+            padding: 0;
+            margin-top: 20px;
+        }
+
+        li {
+            list-style: none;
+            border: 1px solid #e4e7eb;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            background: #fff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #f1f2f6;
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+        }
+
+        .card-title {
+            font-weight: bold;
+            font-size: 16px;
+            color: #c00000;
+        }
+
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            font-size: 13px;
+        }
+
+        .acoes {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            justify-content: flex-end;
+        }
+
+        .btn-editar {
+            background: #ffa502;
+            color: white;
+            padding: 6px 15px;
+            font-size: 13px;
         }
 
         .btn-excluir {
-            background: #dc3545;
+            background: #ff4757;
             color: white;
-            border: none;
+            padding: 6px 15px;
+            font-size: 13px;
         }
     </style>
 </head>
@@ -82,52 +165,126 @@
 
 <div class="container">
 
-    <h1>🛣️ Roteiros</h1>
+    <h1>🚚 Controle Unificado de Rotas e Fretes</h1>
 
     <form id="form">
-        <input placeholder="Motorista" id="motorista" required>
-        <input placeholder="Veículo" id="veiculo" required>
-        <input placeholder="Código do roteiro" id="codigo_roteiro" required>
-        <input type="date" id="data_saida" required>
-        <input placeholder="Destinos (separados por vírgula)" id="destinos">
+        <div class="form-grid">
+            <div class="form-group">
+                <label>Nº DA CARGA</label>
+                <input type="text" id="carga" placeholder="Ex: 457" required>
+            </div>
+            <div class="form-group">
+                <label>DATA DA CARGA</label>
+                <input type="date" id="data_carga" required>
+            </div>
+            <div class="form-group">
+                <label>MOTORISTA</label>
+                <input type="text" id="motorista" placeholder="Nome do motorista" required>
+            </div>
+            <div class="form-group">
+                <label>PLACA</label>
+                <input type="text" id="placa" placeholder="Ex: BAC3B21" required>
+            </div>
+
+            <div class="form-group">
+                <label>MODELO/TIPO VEÍCULO</label>
+                <input type="text" id="veiculo" placeholder="Ex: FIORINO / 3/4VW" required>
+            </div>
+            <div class="form-group">
+                <label>CÓD. ROTA</label>
+                <input type="text" id="codigo_roteiro" placeholder="Ex: 1772" required>
+            </div>
+            <div class="form-group">
+                <label>DESCRIÇÃO DA ROTA</label>
+                <input type="text" id="descricao_rota" placeholder="Ex: ALCOBAÇA / CARAVELAS" required>
+            </div>
+            <div class="form-group">
+                <label>QUANTIDADE ENTREGAS</label>
+                <input type="number" id="quantidade_entregas" placeholder="0" required>
+            </div>
+
+            <div class="form-group">
+                <label>PESO (KG)</label>
+                <input type="number" step="0.01" id="peso" placeholder="0.00" required>
+            </div>
+            <div class="form-group">
+                <label>VOLUME</label>
+                <input type="number" step="0.01" id="volume" placeholder="0.00">
+            </div>
+            <div class="form-group">
+                <label>VALOR DA CARGA</label>
+                <input type="number" step="0.01" id="valor_carga" placeholder="R$ 0.00">
+            </div>
+            <div class="form-group">
+                <label>KM RODADO</label>
+                <input type="number" step="0.01" id="km" placeholder="0.00">
+            </div>
+
+            <div class="form-group">
+                <label>VALOR COLOETA</label>
+                <input type="number" step="0.01" id="valor_coleta" placeholder="R$ 0.00">
+            </div>
+            <div class="form-group">
+                <label>PEDÁGIO</label>
+                <input type="number" step="0.01" id="pedagio" placeholder="R$ 0.00">
+            </div>
+            <div class="form-group">
+                <label>DIÁRIA</label>
+                <input type="number" step="0.01" id="diaria" placeholder="R$ 0.00">
+            </div>
+            <div class="form-group">
+                <label>VALOR FINAL DO FRETE</label>
+                <input type="number" step="0.01" id="valor_frete" placeholder="R$ 0.00" required>
+            </div>
+        </div>
         
-        <button type="submit" id="btn-submit" class="btn-salvar">Salvar Roteiro</button>
-        <button type="button" id="btn-cancelar" class="btn-cancelar" onclick="limparEdicao()">Cancelar Edição</button>
+        <div class="btn-container">
+            <button type="submit" id="btn-submit" class="btn-salvar">Salvar Rota</button>
+            <button type="button" id="btn-cancelar" class="btn-cancelar" onclick="limparEdicao()">Cancelar Edição</button>
+        </div>
     </form>
 
-    <hr>
-
+    <h2>📋 Rotas Lançadas no Sistema</h2>
     <ul id="lista"></ul>
 
 </div>
 
 <script>
-    const API = "/api/roteiros";
+    const API = "/api/rotas";
 
     const form = document.getElementById("form");
     const lista = document.getElementById("lista");
     const btnSubmit = document.getElementById("btn-submit");
     const btnCancelar = document.getElementById("btn-cancelar");
 
-    // Guarda globalmente se estamos editando alguém
     let idEdicao = null; 
-    let roteirosCarregados = [];
+    let rotasCarregadas = [];
 
     async function carregar() {
         const res = await fetch(API);
-        roteirosCarregados = await res.json();
+        rotasCarregadas = await res.json();
 
         lista.innerHTML = "";
 
-        roteirosCarregados.forEach(r => {
+        rotasCarregadas.forEach(r => {
+            const pedagioDiaria = (parseFloat(r.pedagio || 0) + parseFloat(r.diaria || 0)).toFixed(2);
+            
             lista.innerHTML += `
             <li>
-                <b>Motorista:</b> ${r.motorista}<br>
-                <b>Veículo:</b> ${r.veiculo}<br>
-                <b>Código:</b> ${r.codigo_roteiro || ""}<br>
-                <b>Data:</b> ${r.data_saida}<br>
-                <b>Destinos:</b> ${r.destinos || "Nenhum informado"}<br>
-                
+                <div class="card-header">
+                    <div class="card-title">🚚 Carga: ${r.carga} | Rota: ${r.descricao_rota}</div>
+                    <div style="font-weight: bold; color: #c00000;">Frete: R$ ${parseFloat(r.valor_frete || 0).toFixed(2)}</div>
+                </div>
+                <div class="card-grid">
+                    <div><b>Data:</b> ${r.data_carga}</div>
+                    <div><b>Motorista:</b> ${r.motorista}</div>
+                    <div><b>Placa / Veículo:</b> ${r.placa} (${r.veiculo})</div>
+                    <div><b>Cód. Rota:</b> ${r.codigo_roteiro || ""}</div>
+                    <div><b>Entregas:</b> ${r.quantidade_entregas || 0}</div>
+                    <div><b>Peso:</b> ${parseFloat(r.peso || 0).toFixed(2)} kg</div>
+                    <div><b>Pedágio + Diária:</b> R$ ${pedagioDiaria}</div>
+                    <div><b>Valor Carga:</b> R$ ${parseFloat(r.valor_carga || 0).toFixed(2)}</div>
+                </div>
                 <div class="acoes">
                     <button class="btn-editar" onclick="prepararEdicao(${r.id})">Editar</button>
                     <button class="btn-excluir" onclick="excluirRegistro(${r.id})">Excluir</button>
@@ -141,15 +298,25 @@
         e.preventDefault();
 
         const payload = {
+            carga: document.getElementById("carga").value,
+            data_carga: document.getElementById("data_carga").value,
             motorista: document.getElementById("motorista").value,
+            placa: document.getElementById("placa").value,
             veiculo: document.getElementById("veiculo").value,
             codigo_roteiro: document.getElementById("codigo_roteiro").value,
-            data_saida: document.getElementById("data_saida").value,
-            destinos: document.getElementById("destinos").value
+            descricao_rota: document.getElementById("descricao_rota").value,
+            quantidade_entregas: parseInt(document.getElementById("quantidade_entregas").value) || 0,
+            peso: parseFloat(document.getElementById("peso").value) || 0,
+            volume: parseFloat(document.getElementById("volume").value) || 0,
+            valor_carga: parseFloat(document.getElementById("valor_carga").value) || 0,
+            km: parseFloat(document.getElementById("km").value) || 0,
+            valor_coleta: parseFloat(document.getElementById("valor_coleta").value) || 0,
+            pedagio: parseFloat(document.getElementById("pedagio").value) || 0,
+            diaria: parseFloat(document.getElementById("diaria").value) || 0,
+            valor_frete: parseFloat(document.getElementById("valor_frete").value) || 0
         };
 
         if (idEdicao !== null) {
-            // Se idEdicao tem valor, faz um PUT (Atualizar)
             await fetch(`${API}/${idEdicao}`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
@@ -157,7 +324,6 @@
             });
             limparEdicao();
         } else {
-            // Caso contrário, faz um POST (Criar novo)
             await fetch(API, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -170,45 +336,50 @@
     });
 
     function prepararEdicao(id) {
-        // Encontra os dados locais do roteiro selecionado para evitar requisições extras
-        const roteiro = roteirosCarregados.find(r => r.id === id);
-        if (!roteiro) return;
+        const rota = rotasCarregadas.find(r => r.id === id);
+        if (!rota) return;
 
         idEdicao = id;
 
-        // Preenche os inputs com os valores atuais do banco
-        document.getElementById("motorista").value = roteiro.motorista;
-        document.getElementById("veiculo").value = roteiro.veiculo;
-        document.getElementById("codigo_roteiro").value = roteiro.codigo_roteiro;
-        document.getElementById("data_saida").value = roteiro.data_saida;
-        document.getElementById("destinos").value = roteiro.destinos || "";
+        document.getElementById("carga").value = rota.carga;
+        document.getElementById("data_carga").value = rota.data_carga;
+        document.getElementById("motorista").value = rota.motorista;
+        document.getElementById("placa").value = rota.placa;
+        document.getElementById("veiculo").value = rota.veiculo;
+        document.getElementById("codigo_roteiro").value = rota.codigo_roteiro;
+        document.getElementById("descricao_rota").value = rota.descricao_rota;
+        document.getElementById("quantidade_entregas").value = rota.quantidade_entregas;
+        document.getElementById("peso").value = rota.peso;
+        document.getElementById("volume").value = rota.volume || 0;
+        document.getElementById("valor_carga").value = rota.valor_carga || 0;
+        document.getElementById("km").value = rota.km || 0;
+        document.getElementById("valor_coleta").value = rota.valor_coleta || 0;
+        document.getElementById("pedagio").value = rota.pedagio || 0;
+        document.getElementById("diaria").value = rota.diaria || 0;
+        document.getElementById("valor_frete").value = rota.valor_frete;
 
-        // Altera a interface visual
-        btnSubmit.innerText = "Atualizar Roteiro";
-        btnSubmit.style.background = "#ffc107";
-        btnSubmit.style.color = "#000";
+        btnSubmit.innerText = "Atualizar Dados da Rota";
+        btnSubmit.style.background = "#ffa502";
         btnCancelar.style.display = "block";
         
-        // Rola a página para o topo onde está o formulário
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     function limparEdicao() {
         idEdicao = null;
         form.reset();
-        btnSubmit.innerText = "Salvar Roteiro";
-        btnSubmit.style.background = "#28a745";
-        btnSubmit.style.color = "white";
+        btnSubmit.innerText = "Salvar Rota";
+        btnSubmit.style.background = "#2ed573";
         btnCancelar.style.display = "none";
     }
 
     async function excluirRegistro(id) {
         if (idEdicao === id) {
-            alert("Não é possível excluir um roteiro enquanto ele está sendo editado.");
+            alert("Não é possível excluir uma rota enquanto ela está sendo alterada.");
             return;
         }
 
-        const confirmar = confirm("Deseja realmente excluir este roteiro?");
+        const confirmar = confirm("Deseja realmente remover esta rota do fechamento?");
         if (!confirmar) return;
 
         await fetch(`${API}/${id}`, {
@@ -218,7 +389,6 @@
         carregar();
     }
 
-    // Inicialização
     carregar();
 </script>
 

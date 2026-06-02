@@ -1,89 +1,260 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<title>Fretes</title>
+    <meta charset="UTF-8">
+    <title>Movimentação de Fretes - Frescatto</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #f1f2f6;
+            color: #2f3542;
+            padding: 20px;
+            margin: 0;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        h1 {
+            color: #c00000; /* Vermelho Frescatto */
+            margin-top: 0;
+            border-bottom: 2px solid #c00000;
+            padding-bottom: 10px;
+        }
+
+        h2 {
+            margin-top: 30px;
+            color: #2f3542;
+            font-size: 1.2rem;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            font-size: 12px;
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #57606f;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ced6e0;
+            border-radius: 5px;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+
+        input:focus {
+            border-color: #c00000;
+            outline: none;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #2ed573;
+            color: white;
+            font-weight: bold;
+            border-radius: 5px;
+            cursor: pointer;
+            border: none;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+
+        button:hover { background: #26af5f; }
+
+        /* Estilização da Tabela de Fretes Lanzados */
+        .table-responsive {
+            overflow-x: auto;
+            margin-top: 15px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        th {
+            background: #2f3542; /* Grafite */
+            color: white;
+            padding: 10px 12px;
+            font-weight: 600;
+            text-align: left;
+        }
+
+        td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #e4e7eb;
+        }
+
+        tr:nth-child(even) td {
+            background: #f8f9fa; /* Zebra */
+        }
+
+        .text-right { text-align: right; }
+        .negrito { font-weight: bold; }
+    </style>
 </head>
 <body>
 
-<h1>Fretes</h1>
+<div class="container">
 
-<form id="form">
+    <h1>🚚 Lançamento de Fretes (Planilha de Terceiros)</h1>
 
-<input placeholder="Rota" id="rota"><br><br>
-<input placeholder="Placa" id="placa"><br><br>
-<input type="date" id="data"><br><br>
+    <form id="form">
+        <div class="form-grid">
+            <div class="form-group">
+                <label>DATA DA CARGA</label>
+                <input type="date" id="data_carga" required>
+            </div>
+            <div class="form-group">
+                <label>MOTORISTA</label>
+                <input type="text" id="motorista" placeholder="Nome do Motorista" required>
+            </div>
+            <div class="form-group">
+                <label>ROTA (Nº CARGA)</label>
+                <input type="text" id="carga" placeholder="Ex: 457" required>
+            </div>
+            <div class="form-group">
+                <label>PLACA</label>
+                <input type="text" id="placa" placeholder="Ex: BAC3B21" required>
+            </div>
+            <div class="form-group">
+                <label>DESCRIÇÃO DA ROTA</label>
+                <input type="text" id="descricao_rota" placeholder="Ex: ALCOBAÇA / CARAVELAS" required>
+            </div>
+            <div class="form-group">
+                <label>ROMANEIO / CÓD. ROTA</label>
+                <input type="text" id="codigo_roteiro" placeholder="Ex: 1772" required>
+            </div>
+            <div class="form-group">
+                <label>ENTREGAS</label>
+                <input type="number" id="quantidade_entregas" placeholder="0" required>
+            </div>
+            <div class="form-group">
+                <label>PESO (KG)</label>
+                <input type="number" step="0.01" id="peso" placeholder="0.00" required>
+            </div>
+            <div class="form-group">
+                <label>MOD VEÍCULO (CAPACIDADE)</label>
+                <input type="text" id="volume" placeholder="Ex: 500 ou 2500">
+            </div>
+            <div class="form-group">
+                <label>TIPO VEÍCULO</label>
+                <input type="text" id="veiculo" placeholder="Ex: FIORINO" required>
+            </div>
+            <div class="form-group">
+                <label>FRETE BASE</label>
+                <input type="number" step="0.01" id="valor_coleta" placeholder="R$ 0.00">
+            </div>
+            <div class="form-group">
+                <label>ACRÉSCIMO</label>
+                <input type="number" step="0.01" id="pedagio" placeholder="R$ 0.00">
+            </div>
+            <div class="form-group">
+                <label>FRETE A RECEBER (TOTAL)</label>
+                <input type="number" step="0.01" id="valor_frete" placeholder="R$ 0.00" required>
+            </div>
+        </div>
 
-<input placeholder="Romaneio" id="romaneio"><br><br>
-<input placeholder="Peso" id="peso"><br><br>
+        <button type="submit">Salvar Frete</button>
+    </form>
 
-<input placeholder="Modelo Veículo" id="modelo"><br><br>
-<input placeholder="Tipo Veículo" id="tipo"><br><br>
+    <h2>📋 Histórico de Fretes Cadastrados</h2>
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    <th>Data</th>
+                    <th>Motorista</th>
+                    <th>Carga / Rota</th>
+                    <th>Placa / Veículo</th>
+                    <th class="text-right">Peso</th>
+                    <th class="text-right">Entregas</th>
+                    <th class="text-right">Valor do Frete</th>
+                </tr>
+            </thead>
+            <tbody id="lista"></tbody>
+        </table>
+    </div>
 
-<input placeholder="Acréscimo" id="acrescimo"><br><br>
-
-<input placeholder="Transportadora" id="transportadora"><br><br>
-<input placeholder="Mês Referência" id="mes"><br><br>
-<input placeholder="Valor Total" id="valor"><br><br>
-<input placeholder="Qtd Entregas" id="qtd"><br><br>
-
-<button>Salvar</button>
-
-</form>
-
-<hr>
-
-<ul id="lista"></ul>
+</div>
 
 <script>
+    // Aponta para o novo módulo unificado do backend
+    const API = "/api/rotas"; 
 
-const API = "/api/fretes";
+    const form = document.getElementById("form");
+    const lista = document.getElementById("lista");
 
-async function carregar() {
+    async function carregar() {
+        const res = await fetch(API);
+        const dados = await res.json();
 
-    const res = await fetch(API);
-    const dados = await res.json();
+        lista.innerHTML = "";
 
-    lista.innerHTML = "";
+        dados.forEach(f => {
+            lista.innerHTML += `
+            <tr>
+                <td>${f.data_carga}</td>
+                <td class="negrito">${f.motorista}</td>
+                <td><small class="negrito">[${f.carga}]</small> ${f.descricao_rota}</td>
+                <td><small>${f.placa}<br>${f.veiculo}</small></td>
+                <td class="text-right">${parseFloat(f.peso || 0).toFixed(2)} kg</td>
+                <td class="text-right">${f.quantidade_entregas || 0}</td>
+                <td class="text-right negrito" style="color: #c00000;">R$ ${parseFloat(f.valor_frete || 0).toFixed(2)}</td>
+            </tr>`;
+        });
+    }
 
-    dados.forEach(f => {
-        lista.innerHTML += `
-        <li>
-            <b>${f.rota}</b> | ${f.placa} | ${f.peso}kg | R$ ${f.valor_total}
-        </li>`;
+    form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        await fetch(API, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                data_carga: document.getElementById("data_carga").value,
+                motorista: document.getElementById("motorista").value,
+                carga: document.getElementById("carga").value,
+                placa: document.getElementById("placa").value,
+                descricao_rota: document.getElementById("descricao_rota").value,
+                codigo_roteiro: document.getElementById("codigo_roteiro").value,
+                quantidade_entregas: parseInt(document.getElementById("quantidade_entregas").value) || 0,
+                peso: parseFloat(document.getElementById("peso").value) || 0,
+                volume: parseFloat(document.getElementById("volume").value) || 0,
+                veiculo: document.getElementById("veiculo").value,
+                valor_coleta: parseFloat(document.getElementById("valor_coleta").value) || 0,
+                pedagio: parseFloat(document.getElementById("pedagio").value) || 0,
+                valor_frete: parseFloat(document.getElementById("valor_frete").value) || 0
+            })
+        });
+
+        form.reset();
+        carregar();
     });
-}
 
-form.addEventListener("submit", async (e) => {
-    e.preventDefault();
-
-    await fetch(API, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-            rota: rota.value,
-            placa: placa.value,
-            data: data.value,
-            romaneio: romaneio.value,
-            peso: peso.value,
-            modelo_veiculo: modelo.value,
-            tipo_veiculo: tipo.value,
-            acrescimo: acrescimo.value || 0,
-            transportadora: transportadora.value,
-            mes_referencia: mes.value,
-            valor_total: valor.value,
-            quantidade_entregas: qtd.value
-        })
-    });
-
-    form.reset();
     carregar();
-});
-
-carregar();
-
 </script>
 
 </body>

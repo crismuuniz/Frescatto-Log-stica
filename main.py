@@ -172,8 +172,8 @@ def add_rota():
 
 # PUT: Atualiza as informações da rota/roteiro/frete
 @app.route("/api/rotas/<int:id>", methods=["PUT"])
-@app.route("/api/roteiros/<int:id>", methods=["PUT"])
-@app.route("/api/fretes/<int:id>", methods=["PUT"])
+@app.route("/api/roteiros/<int:id>", methods=["PUT"]) # CORRIGIDO: Agora aceita atualização vinda da tela de roteiros
+@app.route("/api/fretes/<int:id>", methods=["PUT"])   # CORRIGIDO: Agora aceita atualização vinda da tela de fretes
 def update_rota(id):
     dados = request.json
     conn = get_db()
@@ -210,8 +210,8 @@ def update_rota(id):
 
 # DELETE: Remove o registro de rotas
 @app.route("/api/rotas/<int:id>", methods=["DELETE"])
-@app.route("/api/roteiros/<int:id>", methods=["DELETE"])
-@app.route("/api/fretes/<int:id>", methods=["DELETE"])
+@app.route("/api/roteiros/<int:id>", methods=["DELETE"]) # CORRIGIDO: Agora aceita exclusão vinda da tela de roteiros
+@app.route("/api/fretes/<int:id>", methods=["DELETE"])   # CORRIGIDO: Agora aceita exclusão vinda da tela de fretes
 def delete_rota(id):
     conn = get_db()
     conn.execute("DELETE FROM rotas WHERE id = ?", (id,))

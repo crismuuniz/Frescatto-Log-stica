@@ -190,7 +190,7 @@
 </div>
 
 <script>
-    const API = "/api/roteiros"; // Mantido original para evitar 404
+    const API = "/api/roteiros"; 
 
     const form = document.getElementById("form");
     const lista = document.getElementById("lista");
@@ -206,16 +206,21 @@
         lista.innerHTML = "";
 
         roteirosCarregados.forEach(r => {
+            // CORREÇÃO DOS CAMPOS: Mapeando os nomes da tabela unificada do backend
+            const codigoExibicao = r.codigo_roteiro || r.romaneio || "Não informado";
+            const dataExibicao = r.data_carga || r.data_saida || r.data || "-";
+            const destinosExibicao = r.descricao_rota || r.destinos || "Nenhum informado";
+
             lista.innerHTML += `
             <li>
                 <div class="card-header">
-                    <div class="card-title">🛣️ Código: ${r.codigo_roteiro || ""}</div>
-                    <div style="font-weight: bold; color: #747d8c;">${r.data_saida}</div>
+                    <div class="card-title">🛣️ Código: ${codigoExibicao}</div>
+                    <div style="font-weight: bold; color: #747d8c;">${dataExibicao}</div>
                 </div>
                 <div class="card-grid">
-                    <div><b>Motorista:</b> ${r.motorista}</div>
-                    <div><b>Veículo:</b> ${r.veiculo}</div>
-                    <div style="grid-column: span 2;"><b>Destinos:</b> ${r.destinos || "Nenhum informado"}</div>
+                    <div><b>Motorista:</b> ${r.motorista || "-"}</div>
+                    <div><b>Veículo:</b> ${r.veiculo || "-"}</div>
+                    <div style="grid-column: span 2;"><b>Destinos:</b> ${destinosExibicao}</div>
                 </div>
                 <div class="acoes">
                     <button class="btn-editar" onclick="prepararEdicao(${r.id})">Editar</button>
@@ -260,11 +265,13 @@
         if (!roteiro) return;
 
         idEdicao = id;
-        document.getElementById("motorista").value = roteiro.motorista;
-        document.getElementById("veiculo").value = roteiro.veiculo;
-        document.getElementById("codigo_roteiro").value = roteiro.codigo_roteiro;
-        document.getElementById("data_saida").value = roteiro.data_saida;
-        document.getElementById("destinos").value = roteiro.destinos || "";
+        
+        // CORREÇÃO NA EDIÇÃO: Garantindo que o formulário capture o dado correto seja qual for a nomenclatura retornada pelo banco
+        document.getElementById("motorista").value = roteiro.motorista || "";
+        document.getElementById("veiculo").value = roteiro.veiculo || "";
+        document.getElementById("codigo_roteiro").value = roteiro.codigo_roteiro || roteiro.romaneio || "";
+        document.getElementById("data_saida").value = roteiro.data_carga || roteiro.data_saida || "";
+        document.getElementById("destinos").value = roteiro.descricao_rota || roteiro.destinos || "";
 
         btnSubmit.innerText = "Atualizar Roteiro";
         btnSubmit.style.background = "#ffa502";

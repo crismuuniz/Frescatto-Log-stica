@@ -155,7 +155,7 @@
             <thead>
                 <tr>
                     <th>Data</th>
-                    <th>Rota</th>
+                    <th>Rota/Carga</th>
                     <th>Placa</th>
                     <th>Veículo</th>
                     <th class="text-right">Peso</th>
@@ -170,7 +170,7 @@
 </div>
 
 <script>
-    const API = "/api/fretes"; // Mantido original para evitar 404
+    const API = "/api/fretes"; 
 
     const form = document.getElementById("form");
     const lista = document.getElementById("lista");
@@ -181,15 +181,21 @@
         lista.innerHTML = "";
 
         dados.forEach(f => {
+            // CORREÇÃO AQUI: Traduzindo as propriedades unificadas vindas do banco de dados (Ex: data_carga, carga, valor_frete)
+            const dataExibicao = f.data_carga || f.data || '-';
+            const rotaExibicao = f.carga || f.rota || '-';
+            const veiculoExibicao = f.veiculo || `${f.tipo_veiculo || ''} ${f.modelo_veiculo || ''}`.strip() || '-';
+            const valorExibicao = f.valor_frete !== undefined ? f.valor_frete : (f.valor_total || 0);
+
             lista.innerHTML += `
             <tr>
-                <td>${f.data || '-'}</td>
-                <td class="negrito">${f.rota}</td>
-                <td>${f.placa}</td>
-                <td><small>${f.tipo_veiculo || ''} ${f.modelo_veiculo || ''}</small></td>
-                <td class="text-right">${f.peso} kg</td>
+                <td>${dataExibicao}</td>
+                <td class="negrito">${rotaExibicao}</td>
+                <td>${f.placa || '-'}</td>
+                <td><small>${veiculoExibicao}</small></td>
+                <td class="text-right">${f.peso || 0} kg</td>
                 <td class="text-right">${f.quantidade_entregas || 0}</td>
-                <td class="text-right negrito" style="color: #c00000;">R$ ${parseFloat(f.valor_total || 0).toFixed(2)}</td>
+                <td class="text-right negrito" style="color: #c00000;">R$ ${parseFloat(valorExibicao).toFixed(2)}</td>
             </tr>`;
         });
     }

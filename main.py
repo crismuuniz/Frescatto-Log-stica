@@ -23,7 +23,8 @@ app = Flask(__name__)
 # ==================================
 
 def get_db():
-    conn = sqlite3.connect("database.db")
+    # AJUSTADO PARA A RENDER: Caminho em /tmp garante permissão de escrita/leitura no servidor
+    conn = sqlite3.connect("/tmp/database.db")
     conn.row_factory = sqlite3.Row
     return conn
 
@@ -98,6 +99,16 @@ def canhotos_page():
 @app.route("/rotas")
 def rotas_page():
     return render_template("rotas.html")
+
+# ADICIONADO: Rota para renderizar a página de fretes (Corrige o 404 detectado no Log)
+@app.route("/fretes")
+def fretes_page():
+    return render_template("fretes.html")
+
+# ADICIONADO: Rota para renderizar a página de roteiros (Corrige o 404 detectado no Log)
+@app.route("/roteiros")
+def roteiros_page():
+    return render_template("roteiros.html")
 
 @app.route("/devolucoes")
 def devolucoes_page():

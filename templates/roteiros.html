@@ -4,145 +4,26 @@
     <meta charset="UTF-8">
     <title>Roteiros - Frescatto</title>
     <style>
-        body {
-            font-family: 'Segoe UI', Arial, sans-serif;
-            background: #f1f2f6;
-            color: #2f3542;
-            padding: 20px;
-            margin: 0;
-        }
-
-        .container {
-            max-width: 900px;
-            margin: auto;
-            background: white;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-        }
-
-        h1 {
-            color: #c00000; /* Vermelho Frescatto */
-            margin-top: 0;
-            border-bottom: 2px solid #c00000;
-            padding-bottom: 10px;
-        }
-
-        h2 {
-            margin-top: 30px;
-            color: #2f3542;
-            font-size: 1.2rem;
-        }
-
-        .form-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-
-        .form-group {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .form-group label {
-            font-size: 12px;
-            font-weight: bold;
-            margin-bottom: 5px;
-            color: #57606f;
-        }
-
-        input {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ced6e0;
-            border-radius: 5px;
-            box-sizing: border-box;
-            font-size: 14px;
-        }
-
-        input:focus {
-            border-color: #c00000;
-            outline: none;
-        }
-
-        .btn-container {
-            display: flex;
-            gap: 10px;
-            margin-top: 10px;
-        }
-
-        button {
-            padding: 12px 20px;
-            font-weight: bold;
-            border-radius: 5px;
-            cursor: pointer;
-            border: none;
-            font-size: 14px;
-            transition: background 0.2s;
-        }
-
-        .btn-salvar {
-            background: #2ed573;
-            color: white;
-            flex: 2;
-        }
-
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f1f2f6; color: #2f3542; padding: 20px; margin: 0; }
+        .container { max-width: 900px; margin: auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        h1 { color: #c00000; margin-top: 0; border-bottom: 2px solid #c00000; padding-bottom: 10px; }
+        h2 { margin-top: 30px; color: #2f3542; font-size: 1.2rem; }
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        .form-group { display: flex; flex-direction: column; }
+        .form-group label { font-size: 12px; font-weight: bold; margin-bottom: 5px; color: #57606f; }
+        input, select { width: 100%; padding: 10px; border: 1px solid #ced6e0; border-radius: 5px; box-sizing: border-box; font-size: 14px; }
+        input:focus, select:focus { border-color: #c00000; outline: none; }
+        .btn-container { display: flex; gap: 10px; margin-top: 10px; }
+        button { padding: 12px 20px; font-weight: bold; border-radius: 5px; cursor: pointer; border: none; font-size: 14px; transition: background 0.2s; }
+        .btn-salvar { background: #2ed573; color: white; flex: 2; }
         .btn-salvar:hover { background: #26af5f; }
-
-        .btn-cancelar {
-            background: #747d8c;
-            color: white;
-            flex: 1;
-            display: none;
-        }
-
-        /* Listagem */
-        ul {
-            padding: 0;
-            margin-top: 20px;
-        }
-
-        li {
-            list-style: none;
-            border: 1px solid #e4e7eb;
-            padding: 20px;
-            margin-bottom: 15px;
-            border-radius: 8px;
-            background: #fff;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
-        }
-
-        .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid #f1f2f6;
-            padding-bottom: 10px;
-            margin-bottom: 10px;
-        }
-
-        .card-title {
-            font-weight: bold;
-            font-size: 16px;
-            color: #c00000;
-        }
-
-        .card-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 10px;
-            font-size: 13px;
-        }
-
-        .acoes {
-            display: flex;
-            gap: 10px;
-            margin-top: 15px;
-            justify-content: flex-end;
-        }
-
+        .btn-cancelar { background: #747d8c; color: white; flex: 1; display: none; }
+        ul { padding: 0; margin-top: 20px; }
+        li { list-style: none; border: 1px solid #e4e7eb; padding: 20px; margin-bottom: 15px; border-radius: 8px; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+        .card-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f1f2f6; padding-bottom: 10px; margin-bottom: 10px; }
+        .card-title { font-weight: bold; font-size: 16px; color: #c00000; }
+        .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; font-size: 13px; }
+        .acoes { display: flex; gap: 10px; margin-top: 15px; justify-content: flex-end; }
         .btn-editar { background: #ffa502; color: white; padding: 6px 15px; font-size: 13px; }
         .btn-excluir { background: #ff4757; color: white; padding: 6px 15px; font-size: 13px; }
     </style>
@@ -150,7 +31,6 @@
 <body>
 
 <div class="container">
-
     <h1>🛣️ Cadastro de Roteiros</h1>
 
     <form id="form">
@@ -161,7 +41,16 @@
             </div>
             <div class="form-group">
                 <label>VEÍCULO</label>
-                <input id="veiculo" placeholder="Ex: Fiorino / Truck" required>
+                <select id="veiculo" required>
+                    <option value="">Selecione o Veículo</option>
+                    <option value="fiorino">Fiorino (R$ 2,20/KM)</option>
+                    <option value="vlc">VLC (R$ 2,80/KM)</option>
+                    <option value="hr">HR (R$ 2,80/KM)</option>
+                    <option value="3/4">3/4 (R$ 3,40/KM)</option>
+                    <option value="toco">Toco (R$ 4,10/KM)</option>
+                    <option value="truck">Truck (R$ 5,00/KM)</option>
+                    <option value="carreta">Carreta (R$ 6,50/KM)</option>
+                </select>
             </div>
             <div class="form-group">
                 <label>CÓDIGO DO ROTEIRO</label>
@@ -173,11 +62,21 @@
             </div>
         </div>
         
-        <div class="form-group" style="margin-bottom: 15px;">
-            <label>DESTINOS</label>
-            <input id="destinos" placeholder="Destinos separados por vírgula (Ex: Alcobaça, Prado)">
+        <div class="form-grid">
+            <div class="form-group">
+                <label>KM RODADOS</label>
+                <input type="number" id="km" step="0.1" placeholder="0.0" required>
+            </div>
+            <div class="form-group">
+                <label>PEDÁGIO (R$)</label>
+                <input type="number" id="pedagio" step="0.01" value="0.00">
+            </div>
+            <div class="form-group">
+                <label>DIÁRIA (R$)</label>
+                <input type="number" id="diaria" step="0.01" value="0.00">
+            </div>
         </div>
-        
+
         <div class="btn-container">
             <button type="submit" id="btn-submit" class="btn-salvar">Salvar Roteiro</button>
             <button type="button" id="btn-cancelar" class="btn-cancelar" onclick="limparEdicao()">Cancelar Edição</button>
@@ -186,13 +85,10 @@
 
     <h2>📋 Roteiros Cadastrados</h2>
     <ul id="lista"></ul>
-
 </div>
 
 <script>
-    // Usando rota relativa garantida para evitar problemas de proxy ou domínios alternativos
     const API = "/api/roteiros"; 
-
     const form = document.getElementById("form");
     const lista = document.getElementById("lista");
     const btnSubmit = document.getElementById("btn-submit");
@@ -204,29 +100,20 @@
     async function carregar() {
         try {
             const res = await fetch(API);
-            if (!res.ok) throw new Error("Erro na API");
-            
             roteirosCarregados = await res.json();
             lista.innerHTML = "";
-
             roteirosCarregados.forEach(r => {
-                // Mapeamento seguro tratando nulos e as chaves corretas unificadas do banco
-                const codigoExibicao = r.codigo_roteiro || r.romaneio || "Não informado";
-                const dataExibicao = r.data_carga || r.data_saida || r.data || "-";
-                const destinosExibicao = r.descricao_rota || r.destinos || "Nenhum informado";
-                const motoristaExibicao = r.motorista || "-";
-                const veiculoExibicao = r.veiculo || `${r.tipo_veiculo || ''} ${r.modelo_veiculo || ''}`.trim() || "-";
-
                 lista.innerHTML += `
                 <li>
                     <div class="card-header">
-                        <div class="card-title">🛣️ Código: ${codigoExibicao}</div>
-                        <div style="font-weight: bold; color: #747d8c;">${dataExibicao}</div>
+                        <div class="card-title">🛣️ Código: ${r.codigo_roteiro}</div>
+                        <div style="font-weight: bold; color: #747d8c;">${r.data_carga}</div>
                     </div>
                     <div class="card-grid">
-                        <div><b>Motorista:</b> ${motoristaExibicao}</div>
-                        <div><b>Veículo:</b> ${veiculoExibicao}</div>
-                        <div style="grid-column: span 2;"><b>Destinos:</b> ${destinosExibicao}</div>
+                        <div><b>Motorista:</b> ${r.motorista}</div>
+                        <div><b>Veículo:</b> ${r.veiculo}</div>
+                        <div><b>KM:</b> ${r.km}</div>
+                        <div><b>Frete Total:</b> R$ ${parseFloat(r.valor_frete).toFixed(2)}</div>
                     </div>
                     <div class="acoes">
                         <button class="btn-editar" onclick="prepararEdicao(${r.id})">Editar</button>
@@ -234,90 +121,56 @@
                     </div>
                 </li>`;
             });
-        } catch (error) {
-            console.error("Erro ao carregar roteiros:", error);
-        }
+        } catch (e) { console.error(e); }
     }
 
     form.addEventListener("submit", async (e) => {
         e.preventDefault();
-
         const payload = {
             motorista: document.getElementById("motorista").value,
             veiculo: document.getElementById("veiculo").value,
             codigo_roteiro: document.getElementById("codigo_roteiro").value,
-            data_saida: document.getElementById("data_saida").value,
-            destinos: document.getElementById("destinos").value
+            data_carga: document.getElementById("data_saida").value,
+            km: parseFloat(document.getElementById("km").value) || 0,
+            pedagio: parseFloat(document.getElementById("pedagio").value) || 0,
+            diaria: parseFloat(document.getElementById("diaria").value) || 0
         };
 
-        try {
-            const url = idEdicao !== null ? `${API}/${idEdicao}` : API;
-            const metodo = idEdicao !== null ? "PUT" : "POST";
+        const url = idEdicao !== null ? `${API}/${idEdicao}` : API;
+        const metodo = idEdicao !== null ? "PUT" : "POST";
 
-            const res = await fetch(url, {
-                method: metodo,
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload)
-            });
-
-            if (!res.ok) {
-                alert("Erro ao salvar no servidor. Verifique o console backend.");
-                return;
-            }
-
-            limparEdicao();
-            form.reset();
-            carregar();
-        } catch (error) {
-            console.error("Erro na submissão:", error);
-            alert("Falha de conexão com o servidor.");
-        }
+        await fetch(url, { method: metodo, headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+        limparEdicao();
+        carregar();
     });
 
     function prepararEdicao(id) {
         const r = roteirosCarregados.find(item => item.id === id);
-        if (!r) return;
-
         idEdicao = id;
-        
-        // Correção de segurança para carregar no input o valor correto vindo do banco unificado
-        document.getElementById("motorista").value = r.motorista || "";
-        document.getElementById("veiculo").value = r.veiculo || `${r.tipo_veiculo || ''} ${r.modelo_veiculo || ''}`.trim() || "";
-        document.getElementById("codigo_roteiro").value = r.codigo_roteiro || r.romaneio || "";
-        document.getElementById("data_saida").value = r.data_carga || r.data_saida || r.data || "";
-        document.getElementById("destinos").value = r.descricao_rota || r.destinos || "";
-
+        document.getElementById("motorista").value = r.motorista;
+        document.getElementById("veiculo").value = r.veiculo;
+        document.getElementById("codigo_roteiro").value = r.codigo_roteiro;
+        document.getElementById("data_saida").value = r.data_carga;
+        document.getElementById("km").value = r.km;
+        document.getElementById("pedagio").value = r.pedagio;
+        document.getElementById("diaria").value = r.diaria;
         btnSubmit.innerText = "Atualizar Roteiro";
-        btnSubmit.style.background = "#ffa502";
         btnCancelar.style.display = "block";
-        window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     function limparEdicao() {
         idEdicao = null;
         form.reset();
         btnSubmit.innerText = "Salvar Roteiro";
-        btnSubmit.style.background = "#2ed573";
         btnCancelar.style.display = "none";
     }
 
     async function excluirRegistro(id) {
-        if (idEdicao === id) { alert("Cancele a edição antes de excluir."); return; }
-        if (!confirm("Deseja realmente excluir este roteiro?")) return;
-
-        try {
-            const res = await fetch(`${API}/${id}`, { method: "DELETE" });
-            if (res.ok) {
-                carregar();
-            } else {
-                alert("Erro ao excluir do banco de dados.");
-            }
-        } catch (error) {
-            console.error("Erro ao excluir:", error);
+        if(confirm("Excluir este roteiro?")) {
+            await fetch(`${API}/${id}`, { method: "DELETE" });
+            carregar();
         }
     }
-
-    // Inicializa a listagem automaticamente ao abrir a página
     carregar();
 </script>
 </body>

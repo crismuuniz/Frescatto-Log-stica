@@ -4,86 +4,21 @@
     <meta charset="UTF-8">
     <title>Movimentação de Fretes - Frescatto</title>
     <style>
-        body {
-            font-family: 'Segoe UI', Arial, sans-serif;
-            background: #f1f2f6;
-            color: #2f3542;
-            padding: 20px;
-            margin: 0;
-        }
-
-        .container {
-            max-width: 1100px;
-            margin: auto;
-            background: white;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-        }
-
-        h1 {
-            color: #c00000; /* Vermelho Frescatto */
-            margin-top: 0;
-            border-bottom: 2px solid #c00000;
-            padding-bottom: 10px;
-        }
-
-        h2 {
-            margin-top: 30px;
-            color: #2f3542;
-            font-size: 1.2rem;
-        }
-
-        .form-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-
-        .form-group {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .form-group label {
-            font-size: 12px;
-            font-weight: bold;
-            margin-bottom: 5px;
-            color: #57606f;
-        }
-
-        input {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ced6e0;
-            border-radius: 5px;
-            box-sizing: border-box;
-            font-size: 14px;
-        }
-
-        input:focus { border-color: #c00000; outline: none; }
-
-        button {
-            width: 100%;
-            padding: 12px;
-            background: #2ed573;
-            color: white;
-            font-weight: bold;
-            border-radius: 5px;
-            cursor: pointer;
-            border: none;
-            font-size: 14px;
-            transition: background 0.2s;
-        }
-
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f1f2f6; color: #2f3542; padding: 20px; margin: 0; }
+        .container { max-width: 1100px; margin: auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        h1 { color: #c00000; margin-top: 0; border-bottom: 2px solid #c00000; padding-bottom: 10px; }
+        h2 { margin-top: 30px; color: #2f3542; font-size: 1.2rem; }
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        .form-group { display: flex; flex-direction: column; }
+        .form-group label { font-size: 12px; font-weight: bold; margin-bottom: 5px; color: #57606f; }
+        input, select { width: 100%; padding: 10px; border: 1px solid #ced6e0; border-radius: 5px; box-sizing: border-box; font-size: 14px; }
+        input:focus, select:focus { border-color: #c00000; outline: none; }
+        button { width: 100%; padding: 12px; background: #2ed573; color: white; font-weight: bold; border-radius: 5px; cursor: pointer; border: none; font-size: 14px; transition: background 0.2s; }
         button:hover { background: #26af5f; }
-
         .table-responsive { overflow-x: auto; margin-top: 15px; }
         table { width: 100%; border-collapse: collapse; font-size: 14px; }
-        th { background: #2f3542; color: white; padding: 10px 12px; font-weight: 600; text-align: left; }
+        th { background: #2f3542; color: white; padding: 10px 12px; text-align: left; }
         td { padding: 10px 12px; border-bottom: 1px solid #e4e7eb; }
-        tr:nth-child(even) td { background: #f8f9fa; }
         .text-right { text-align: right; }
         .negrito { font-weight: bold; }
     </style>
@@ -91,159 +26,102 @@
 <body>
 
 <div class="container">
-
-    <h1>🚚 Lançamento de Fretes Terceiros</h1>
+    <h1>🚚 Lançamento de Fretes (Cálculo Automático)</h1>
 
     <form id="form">
         <div class="form-grid">
             <div class="form-group">
-                <label>ROTA</label>
-                <input placeholder="Ex: 457" id="rota" required>
+                <label>VEÍCULO</label>
+                <select id="veiculo" required>
+                    <option value="">Selecione...</option>
+                    <option value="fiorino">Fiorino (R$ 2,20/KM)</option>
+                    <option value="vlc">VLC (R$ 2,80/KM)</option>
+                    <option value="hr">HR (R$ 2,80/KM)</option>
+                    <option value="3/4">3/4 (R$ 3,40/KM)</option>
+                    <option value="toco">Toco (R$ 4,10/KM)</option>
+                    <option value="truck">Truck (R$ 5,00/KM)</option>
+                    <option value="carreta">Carreta (R$ 6,50/KM)</option>
+                </select>
             </div>
             <div class="form-group">
-                <label>PLACA</label>
-                <input placeholder="Ex: BAC3B21" id="placa" required>
+                <label>KM RODADOS</label>
+                <input type="number" id="km" step="0.1" placeholder="0.0" required>
+            </div>
+            <div class="form-group">
+                <label>PEDÁGIO (R$)</label>
+                <input type="number" id="pedagio" step="0.01" value="0.00">
+            </div>
+            <div class="form-group">
+                <label>DIÁRIA (R$)</label>
+                <input type="number" id="diaria" step="0.01" value="0.00">
+            </div>
+            <div class="form-group">
+                <label>ROTA</label>
+                <input id="rota" required>
             </div>
             <div class="form-group">
                 <label>DATA</label>
                 <input type="date" id="data" required>
             </div>
-            <div class="form-group">
-                <label>ROMANEIO</label>
-                <input placeholder="Ex: 1772" id="romaneio" required>
-            </div>
-            <div class="form-group">
-                <label>PESO (KG)</label>
-                <input placeholder="0.00" id="peso" required>
-            </div>
-            <div class="form-group">
-                <label>MODELO VEÍCULO</label>
-                <input placeholder="Ex: 500" id="modelo">
-            </div>
-            <div class="form-group">
-                <label>TIPO VEÍCULO</label>
-                <input placeholder="Ex: FIORINO" id="tipo">
-            </div>
-            <div class="form-group">
-                <label>ACRÉSCIMO (R$)</label>
-                <input placeholder="0.00" id="acrescimo">
-            </div>
-            <div class="form-group">
-                <label>TRANSPORTADORA</label>
-                <input placeholder="Nome da Empresa" id="transportadora">
-            </div>
-            <div class="form-group">
-                <label>MÊS REFERÊNCIA</label>
-                <input placeholder="Ex: Maio" id="mes">
-            </div>
-            <div class="form-group">
-                <label>VALOR TOTAL (R$)</label>
-                <input placeholder="0.00" id="valor" required>
-            </div>
-            <div class="form-group">
-                <label>QTD ENTREGAS</label>
-                <input type="number" placeholder="0" id="qtd" required>
-            </div>
         </div>
-
-        <button type="submit">Salvar Frete</button>
+        <button type="submit">Salvar e Calcular Frete</button>
     </form>
 
-    <h2>📋 Histórico de Fretes Cadastrados</h2>
+    <h2>📋 Histórico</h2>
     <div class="table-responsive">
         <table>
             <thead>
                 <tr>
                     <th>Data</th>
-                    <th>Rota/Carga</th>
-                    <th>Placa</th>
+                    <th>Rota</th>
                     <th>Veículo</th>
-                    <th class="text-right">Peso</th>
-                    <th class="text-right">Entregas</th>
-                    <th class="text-right">Valor Total</th>
+                    <th>KM</th>
+                    <th class="text-right">Valor Total (Calculado)</th>
                 </tr>
             </thead>
             <tbody id="lista"></tbody>
         </table>
     </div>
-
 </div>
 
 <script>
     const API = "/api/fretes"; 
-
     const form = document.getElementById("form");
     const lista = document.getElementById("lista");
 
     async function carregar() {
-        try {
-            const res = await fetch(API);
-            if (!res.ok) throw new Error("Erro ao consultar a API de fretes.");
-            
-            const dados = await res.json();
-            lista.innerHTML = "";
-
-            dados.forEach(f => {
-                // Mapeamento correto unificado
-                const dataExibicao = f.data_carga || f.data || '-';
-                const rotaExibicao = f.carga || f.rota || '-';
-                
-                // CORREÇÃO AQUI: Substituído o .strip() inválido pelo .trim() nativo do JavaScript
-                const veiculoExibicao = f.veiculo || `${f.tipo_veiculo || ''} ${f.modelo_veiculo || ''}`.trim() || '-';
-                const valorExibicao = f.valor_frete !== undefined ? f.valor_frete : (f.valor_total || 0);
-
-                lista.innerHTML += `
-                <tr>
-                    <td>${dataExibicao}</td>
-                    <td class="negrito">${rotaExibicao}</td>
-                    <td>${f.placa || '-'}</td>
-                    <td><small>${veiculoExibicao}</small></td>
-                    <td class="text-right">${f.peso || 0} kg</td>
-                    <td class="text-right">${f.quantidade_entregas || 0}</td>
-                    <td class="text-right negrito" style="color: #c00000;">R$ ${parseFloat(valorExibicao).toFixed(2)}</td>
-                </tr>`;
-            });
-        } catch (error) {
-            console.error("Erro na listagem de fretes:", error);
-        }
+        const res = await fetch(API);
+        const dados = await res.json();
+        lista.innerHTML = dados.map(f => `
+            <tr>
+                <td>${f.data || '-'}</td>
+                <td>${f.rota || '-'}</td>
+                <td>${f.veiculo || '-'}</td>
+                <td>${f.km || 0}</td>
+                <td class="text-right negrito" style="color: #c00000;">R$ ${parseFloat(f.valor_frete || 0).toFixed(2)}</td>
+            </tr>
+        `).join('');
     }
 
     form.addEventListener("submit", async (e) => {
         e.preventDefault();
-
         const payload = {
+            veiculo: document.getElementById("veiculo").value,
+            km: parseFloat(document.getElementById("km").value),
+            pedagio: parseFloat(document.getElementById("pedagio").value) || 0,
+            diaria: parseFloat(document.getElementById("diaria").value) || 0,
             rota: document.getElementById("rota").value,
-            placa: document.getElementById("placa").value,
-            data: document.getElementById("data").value,
-            romaneio: document.getElementById("romaneio").value,
-            peso: document.getElementById("peso").value,
-            modelo_veiculo: document.getElementById("modelo").value,
-            tipo_veiculo: document.getElementById("tipo").value,
-            acrescimo: document.getElementById("acrescimo").value || 0,
-            transportadora: document.getElementById("transportadora").value,
-            mes_referencia: document.getElementById("mes").value,
-            valor_total: document.getElementById("valor").value,
-            quantidade_entregas: document.getElementById("qtd").value
+            data: document.getElementById("data").value
         };
 
-        try {
-            const res = await fetch(API, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload)
-            });
-
-            if (!res.ok) {
-                alert("Erro ao salvar frete no servidor. Verifique o console da aplicação.");
-                return;
-            }
-
-            form.reset();
-            carregar();
-        } catch (error) {
-            console.error("Erro ao enviar frete:", error);
-            alert("Falha de conexão.");
-        }
+        await fetch(API, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+        
+        form.reset();
+        carregar();
     });
 
     carregar();

@@ -19,6 +19,35 @@ app = Flask(__name__)
 # pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
 
 # ==================================
+# TABELA DE TARIFAS E REGRA DE NEGÓCIO (PAGAMENTO POR KM)
+# ==================================
+
+def calcular_frete_por_veiculo(veiculo, km, pedagio, diaria):
+    """
+    Tabela de preços por KM dinâmicos para a operação Frescatto.
+    Calcula automaticamente: (KM * Tarifa do Veículo) + Pedágio + Diária
+    """
+    tarifas = {
+        "fiorino": 2.20,
+        "vlc": 2.80,
+        "hr": 2.80,
+        "3/4": 3.40,
+        "toco": 4.10,
+        "truck": 5.00,
+        "carreta": 6.50
+    }
+    
+    # Limpa o texto do veículo para garantir a correspondência na busca (minúsculo e sem espaços)
+    veiculo_limpo = str(veiculo).strip().lower()
+    
+    # Procura a tarifa padrão. Se não encontrar o modelo exato, assume um valor médio de R$ 3.00/KM
+    taxa_km = tarifas.get(veiculo_limpo, 3.00)
+    
+    # Executa o cálculo da regra de negócio
+    return (km * taxa_km) + pedagio + diaria
+
+
+# ==================================
 # SQLITE CONFIGURAÇÃO (ESTRUTURA PLANILHA FRESCATTO)
 # ==================================
 
@@ -52,7 +81,7 @@ def init_db():
         km REAL,
         pedagio REAL,
         diaria REAL,
-        valor_frete REAL         -- VALOR FRETE (Faturamento)
+        valor_frete REAL         -- VALOR FRETE (Faturamento calculado)
     )
     """)
 
@@ -100,12 +129,10 @@ def canhotos_page():
 def rotas_page():
     return render_template("rotas.html")
 
-# ADICIONADO: Rota para renderizar a página de fretes (Corrige o 404 detectado no Log)
 @app.route("/fretes")
 def fretes_page():
     return render_template("fretes.html")
 
-# ADICIONADO: Rota para renderizar a página de roteiros (Corrige o 404 detectado no Log)
 @app.route("/roteiros")
 def roteiros_page():
     return render_template("roteiros.html")
@@ -131,10 +158,10 @@ def relatorios_page():
     )
 
 # ==================================
-# API: MÓDULO UNIFICADO DE ROTAS E FRETES
+# API: MÓDULO UNIFICADO DE ROTAS E FRETES (COM CÁLCULO DE KM)
 # ==================================
 
-# GET: Retorna as rotas (Atende os três endpoints para evitar 404)
+# GET: Retorna as rotas
 @app.route("/api/rotas", methods=["GET"])
 @app.route("/api/roteiros", methods=["GET"])
 @app.route("/api/fretes", methods=["GET"])
@@ -145,13 +172,23 @@ def get_rotas():
     return jsonify([dict(r) for r in rows])
 
 
-# POST: Salva novas rotas (Faz o de/para inteligente se vier do form antigo de roteiros ou fretes)
+# POST: Salva novas rotas executando o cálculo automático baseado no tipo de veículo por KM
 @app.route("/api/rotas", methods=["POST"])
 @app.route("/api/roteiros", methods=["POST"])
 @app.route("/api/fretes", methods=["POST"])
 def add_rota():
     dados = request.json
     conn = get_db()
+    
+    # Tratamento dos dados de entrada
+    veiculo = dados.get("veiculo") or dados.get("tipo_veiculo") or "Padrão"
+    km = float(dados.get("km") or 0)
+    pedagio = float(dados.get("pedagio") or 0)
+    diaria = float(dados.get("diaria") or 0)
+    
+    # Executa a regra da opção 2
+    valor_final_frete = calcular_frete_por_veiculo(veiculo, km, pedagio, diaria)
+
     conn.execute("""
         INSERT INTO rotas (
             carga, data_carga, motorista, placa, veiculo, codigo_roteiro, 
@@ -159,35 +196,44 @@ def add_rota():
             volume, valor_carga, km, pedagio, diaria, valor_frete
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """, (
-        dados.get("carga") or dados.get("rota"), # Trata 'rota' vindo do módulo de fretes antigo como número da carga
+        dados.get("carga") or dados.get("rota"),
         dados.get("data_carga") or dados.get("data"),
         dados.get("motorista"),
         dados.get("placa"),
-        dados.get("veiculo") or dados.get("tipo_veiculo"),
+        veiculo,
         dados.get("codigo_roteiro") or dados.get("romaneio"),
         dados.get("descricao_rota"),
         dados.get("valor_coleta", 0),
-        dados.get("quantidade_entregas") or dados.get("quantidade_entregas", 0),
+        dados.get("quantidade_entregas", 0),
         dados.get("peso", 0),
         dados.get("volume", 0),
         dados.get("valor_carga", 0),
-        dados.get("km", 0),
-        dados.get("pedagio", 0),
-        dados.get("diaria", 0),
-        dados.get("valor_frete") or dados.get("valor_total", 0)
+        km,
+        pedagio,
+        diaria,
+        valor_final_frete  # Grava o valor gerado pelo KM
     ))
     conn.commit()
     conn.close()
-    return jsonify({"status": "ok"}), 201
+    return jsonify({"status": "ok", "valor_calculado": valor_final_frete}), 201
 
 
-# PUT: Atualiza as informações da rota/roteiro/frete
+# PUT: Atualiza as informações recalculando o valor do frete se mudarem o KM, veículo, etc.
 @app.route("/api/rotas/<int:id>", methods=["PUT"])
-@app.route("/api/roteiros/<int:id>", methods=["PUT"]) # CORRIGIDO: Agora aceita atualização vinda da tela de roteiros
-@app.route("/api/fretes/<int:id>", methods=["PUT"])   # CORRIGIDO: Agora aceita atualização vinda da tela de fretes
+@app.route("/api/roteiros/<int:id>", methods=["PUT"])
+@app.route("/api/fretes/<int:id>", methods=["PUT"])
 def update_rota(id):
     dados = request.json
     conn = get_db()
+    
+    veiculo = dados.get("veiculo") or dados.get("tipo_veiculo") or "Padrão"
+    km = float(dados.get("km") or 0)
+    pedagio = float(dados.get("pedagio") or 0)
+    diaria = float(dados.get("diaria") or 0)
+    
+    # Recalcula o valor com base nos novos dados atualizados
+    valor_final_frete = calcular_frete_por_veiculo(veiculo, km, pedagio, diaria)
+
     conn.execute("""
         UPDATE rotas SET 
             carga = ?, data_carga = ?, motorista = ?, placa = ?, veiculo = ?, 
@@ -200,29 +246,29 @@ def update_rota(id):
         dados.get("data_carga") or dados.get("data"),
         dados.get("motorista"),
         dados.get("placa"),
-        dados.get("veiculo") or dados.get("tipo_veiculo"),
+        veiculo,
         dados.get("codigo_roteiro") or dados.get("romaneio"),
         dados.get("descricao_rota"),
         dados.get("valor_coleta", 0),
-        dados.get("quantidade_entregas") or dados.get("quantidade_entregas", 0),
+        dados.get("quantidade_entregas", 0),
         dados.get("peso", 0),
         dados.get("volume", 0),
         dados.get("valor_carga", 0),
-        dados.get("km", 0),
-        dados.get("pedagio", 0),
-        dados.get("diaria", 0),
-        dados.get("valor_frete") or dados.get("valor_total", 0),
+        km,
+        pedagio,
+        diaria,
+        valor_final_frete,
         id
     ))
     conn.commit()
     conn.close()
-    return jsonify({"status": "ok"})
+    return jsonify({"status": "ok", "valor_calculado": valor_final_frete})
 
 
 # DELETE: Remove o registro de rotas
 @app.route("/api/rotas/<int:id>", methods=["DELETE"])
-@app.route("/api/roteiros/<int:id>", methods=["DELETE"]) # CORRIGIDO: Agora aceita exclusão vinda da tela de roteiros
-@app.route("/api/fretes/<int:id>", methods=["DELETE"])   # CORRIGIDO: Agora aceita exclusão vinda da tela de fretes
+@app.route("/api/roteiros/<int:id>", methods=["DELETE"])
+@app.route("/api/fretes/<int:id>", methods=["DELETE"])
 def delete_rota(id):
     conn = get_db()
     conn.execute("DELETE FROM rotas WHERE id = ?", (id,))

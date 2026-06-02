@@ -176,54 +176,74 @@
     const lista = document.getElementById("lista");
 
     async function carregar() {
-        const res = await fetch(API);
-        const dados = await res.json();
-        lista.innerHTML = "";
+        try {
+            const res = await fetch(API);
+            if (!res.ok) throw new Error("Erro ao consultar a API de fretes.");
+            
+            const dados = await res.json();
+            lista.innerHTML = "";
 
-        dados.forEach(f => {
-            // CORREÇÃO AQUI: Traduzindo as propriedades unificadas vindas do banco de dados (Ex: data_carga, carga, valor_frete)
-            const dataExibicao = f.data_carga || f.data || '-';
-            const rotaExibicao = f.carga || f.rota || '-';
-            const veiculoExibicao = f.veiculo || `${f.tipo_veiculo || ''} ${f.modelo_veiculo || ''}`.strip() || '-';
-            const valorExibicao = f.valor_frete !== undefined ? f.valor_frete : (f.valor_total || 0);
+            dados.forEach(f => {
+                // Mapeamento correto unificado
+                const dataExibicao = f.data_carga || f.data || '-';
+                const rotaExibicao = f.carga || f.rota || '-';
+                
+                // CORREÇÃO AQUI: Substituído o .strip() inválido pelo .trim() nativo do JavaScript
+                const veiculoExibicao = f.veiculo || `${f.tipo_veiculo || ''} ${f.modelo_veiculo || ''}`.trim() || '-';
+                const valorExibicao = f.valor_frete !== undefined ? f.valor_frete : (f.valor_total || 0);
 
-            lista.innerHTML += `
-            <tr>
-                <td>${dataExibicao}</td>
-                <td class="negrito">${rotaExibicao}</td>
-                <td>${f.placa || '-'}</td>
-                <td><small>${veiculoExibicao}</small></td>
-                <td class="text-right">${f.peso || 0} kg</td>
-                <td class="text-right">${f.quantidade_entregas || 0}</td>
-                <td class="text-right negrito" style="color: #c00000;">R$ ${parseFloat(valorExibicao).toFixed(2)}</td>
-            </tr>`;
-        });
+                lista.innerHTML += `
+                <tr>
+                    <td>${dataExibicao}</td>
+                    <td class="negrito">${rotaExibicao}</td>
+                    <td>${f.placa || '-'}</td>
+                    <td><small>${veiculoExibicao}</small></td>
+                    <td class="text-right">${f.peso || 0} kg</td>
+                    <td class="text-right">${f.quantidade_entregas || 0}</td>
+                    <td class="text-right negrito" style="color: #c00000;">R$ ${parseFloat(valorExibicao).toFixed(2)}</td>
+                </tr>`;
+            });
+        } catch (error) {
+            console.error("Erro na listagem de fretes:", error);
+        }
     }
 
     form.addEventListener("submit", async (e) => {
         e.preventDefault();
 
-        await fetch(API, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                rota: document.getElementById("rota").value,
-                placa: document.getElementById("placa").value,
-                data: document.getElementById("data").value,
-                romaneio: document.getElementById("romaneio").value,
-                peso: document.getElementById("peso").value,
-                modelo_veiculo: document.getElementById("modelo").value,
-                tipo_veiculo: document.getElementById("tipo").value,
-                acrescimo: document.getElementById("acrescimo").value || 0,
-                transportadora: document.getElementById("transportadora").value,
-                mes_referencia: document.getElementById("mes").value,
-                valor_total: document.getElementById("valor").value,
-                quantidade_entregas: document.getElementById("qtd").value
-            })
-        });
+        const payload = {
+            rota: document.getElementById("rota").value,
+            placa: document.getElementById("placa").value,
+            data: document.getElementById("data").value,
+            romaneio: document.getElementById("romaneio").value,
+            peso: document.getElementById("peso").value,
+            modelo_veiculo: document.getElementById("modelo").value,
+            tipo_veiculo: document.getElementById("tipo").value,
+            acrescimo: document.getElementById("acrescimo").value || 0,
+            transportadora: document.getElementById("transportadora").value,
+            mes_referencia: document.getElementById("mes").value,
+            valor_total: document.getElementById("valor").value,
+            quantidade_entregas: document.getElementById("qtd").value
+        };
 
-        form.reset();
-        carregar();
+        try {
+            const res = await fetch(API, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+
+            if (!res.ok) {
+                alert("Erro ao salvar frete no servidor. Verifique o console da aplicação.");
+                return;
+            }
+
+            form.reset();
+            carregar();
+        } catch (error) {
+            console.error("Erro ao enviar frete:", error);
+            alert("Falha de conexão.");
+        }
     });
 
     carregar();

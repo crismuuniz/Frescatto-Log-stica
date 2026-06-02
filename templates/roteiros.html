@@ -190,6 +190,7 @@
 </div>
 
 <script>
+    // Usando rota relativa garantida para evitar problemas de proxy ou domínios alternativos
     const API = "/api/roteiros"; 
 
     const form = document.getElementById("form");
@@ -201,33 +202,41 @@
     let roteirosCarregados = [];
 
     async function carregar() {
-        const res = await fetch(API);
-        roteirosCarregados = await res.json();
-        lista.innerHTML = "";
+        try {
+            const res = await fetch(API);
+            if (!res.ok) throw new Error("Erro na API");
+            
+            roteirosCarregados = await res.json();
+            lista.innerHTML = "";
 
-        roteirosCarregados.forEach(r => {
-            // CORREÇÃO DOS CAMPOS: Mapeando os nomes da tabela unificada do backend
-            const codigoExibicao = r.codigo_roteiro || r.romaneio || "Não informado";
-            const dataExibicao = r.data_carga || r.data_saida || r.data || "-";
-            const destinosExibicao = r.descricao_rota || r.destinos || "Nenhum informado";
+            roteirosCarregados.forEach(r => {
+                // Mapeamento seguro tratando nulos e as chaves corretas unificadas do banco
+                const codigoExibicao = r.codigo_roteiro || r.romaneio || "Não informado";
+                const dataExibicao = r.data_carga || r.data_saida || r.data || "-";
+                const destinosExibicao = r.descricao_rota || r.destinos || "Nenhum informado";
+                const motoristaExibicao = r.motorista || "-";
+                const veiculoExibicao = r.veiculo || `${r.tipo_veiculo || ''} ${r.modelo_veiculo || ''}`.trim() || "-";
 
-            lista.innerHTML += `
-            <li>
-                <div class="card-header">
-                    <div class="card-title">🛣️ Código: ${codigoExibicao}</div>
-                    <div style="font-weight: bold; color: #747d8c;">${dataExibicao}</div>
-                </div>
-                <div class="card-grid">
-                    <div><b>Motorista:</b> ${r.motorista || "-"}</div>
-                    <div><b>Veículo:</b> ${r.veiculo || "-"}</div>
-                    <div style="grid-column: span 2;"><b>Destinos:</b> ${destinosExibicao}</div>
-                </div>
-                <div class="acoes">
-                    <button class="btn-editar" onclick="prepararEdicao(${r.id})">Editar</button>
-                    <button class="btn-excluir" onclick="excluirRegistro(${r.id})">Excluir</button>
-                </div>
-            </li>`;
-        });
+                lista.innerHTML += `
+                <li>
+                    <div class="card-header">
+                        <div class="card-title">🛣️ Código: ${codigoExibicao}</div>
+                        <div style="font-weight: bold; color: #747d8c;">${dataExibicao}</div>
+                    </div>
+                    <div class="card-grid">
+                        <div><b>Motorista:</b> ${motoristaExibicao}</div>
+                        <div><b>Veículo:</b> ${veiculoExibicao}</div>
+                        <div style="grid-column: span 2;"><b>Destinos:</b> ${destinosExibicao}</div>
+                    </div>
+                    <div class="acoes">
+                        <button class="btn-editar" onclick="prepararEdicao(${r.id})">Editar</button>
+                        <button class="btn-excluir" onclick="excluirRegistro(${r.id})">Excluir</button>
+                    </div>
+                </li>`;
+            });
+        } catch (error) {
+            console.error("Erro ao carregar roteiros:", error);
+        }
     }
 
     form.addEventListener("submit", async (e) => {
@@ -241,37 +250,42 @@
             destinos: document.getElementById("destinos").value
         };
 
-        if (idEdicao !== null) {
-            await fetch(`${API}/${idEdicao}`, {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload)
-            });
-            limparEdicao();
-        } else {
-            await fetch(API, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload)
-            });
-        }
+        try {
+            const url = idEdicao !== null ? `${API}/${idEdicao}` : API;
+            const metodo = idEdicao !== null ? "PUT" : "POST";
 
-        form.reset();
-        carregar();
+            const res = await fetch(url, {
+                method: metodo,
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+
+            if (!res.ok) {
+                alert("Erro ao salvar no servidor. Verifique o console backend.");
+                return;
+            }
+
+            limparEdicao();
+            form.reset();
+            carregar();
+        } catch (error) {
+            console.error("Erro na submissão:", error);
+            alert("Falha de conexão com o servidor.");
+        }
     });
 
     function prepararEdicao(id) {
-        const roteiro = roteirosCarregados.find(r => r.id === id);
-        if (!roteiro) return;
+        const r = roteirosCarregados.find(item => item.id === id);
+        if (!r) return;
 
         idEdicao = id;
         
-        // CORREÇÃO NA EDIÇÃO: Garantindo que o formulário capture o dado correto seja qual for a nomenclatura retornada pelo banco
-        document.getElementById("motorista").value = roteiro.motorista || "";
-        document.getElementById("veiculo").value = roteiro.veiculo || "";
-        document.getElementById("codigo_roteiro").value = roteiro.codigo_roteiro || roteiro.romaneio || "";
-        document.getElementById("data_saida").value = roteiro.data_carga || roteiro.data_saida || "";
-        document.getElementById("destinos").value = roteiro.descricao_rota || roteiro.destinos || "";
+        // Correção de segurança para carregar no input o valor correto vindo do banco unificado
+        document.getElementById("motorista").value = r.motorista || "";
+        document.getElementById("veiculo").value = r.veiculo || `${r.tipo_veiculo || ''} ${r.modelo_veiculo || ''}`.trim() || "";
+        document.getElementById("codigo_roteiro").value = r.codigo_roteiro || r.romaneio || "";
+        document.getElementById("data_saida").value = r.data_carga || r.data_saida || r.data || "";
+        document.getElementById("destinos").value = r.descricao_rota || r.destinos || "";
 
         btnSubmit.innerText = "Atualizar Roteiro";
         btnSubmit.style.background = "#ffa502";
@@ -291,10 +305,19 @@
         if (idEdicao === id) { alert("Cancele a edição antes de excluir."); return; }
         if (!confirm("Deseja realmente excluir este roteiro?")) return;
 
-        await fetch(`${API}/${id}`, { method: "DELETE" });
-        carregar();
+        try {
+            const res = await fetch(`${API}/${id}`, { method: "DELETE" });
+            if (res.ok) {
+                carregar();
+            } else {
+                alert("Erro ao excluir do banco de dados.");
+            }
+        } catch (error) {
+            console.error("Erro ao excluir:", error);
+        }
     }
 
+    // Inicializa a listagem automaticamente ao abrir a página
     carregar();
 </script>
 </body>

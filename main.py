@@ -657,3 +657,28 @@ def relatorio_pdf():
         download_name=f"relatorio_{inicio}_{fim}.pdf",
         as_attachment=True
     )
+
+@app.route("/api/ocr", methods=["POST"])
+def ocr_route():
+    if "file" not in request.files:
+        return jsonify({"sucesso": False, "erro": "Nenhum arquivo enviado"}), 400
+    
+    try:
+        file = request.files["file"]
+        # Abrir imagem e processar
+        img = Image.open(file.stream)
+        texto = pytesseract.image_to_string(img, lang='por')
+        
+        # Extração de dados
+        match_romaneio = re.search(r'(?:romaneio|nº|nota)[:.\s]+(\d+)', texto, re.IGNORECASE)
+        
+        return jsonify({
+            "sucesso": True, 
+            "resultado": texto[:500], 
+            "romaneio": match_romaneio.group(1) if match_romaneio else None
+        })
+    except Exception as e:
+        return jsonify({"sucesso": False, "erro": str(e)}), 500
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 3000)))

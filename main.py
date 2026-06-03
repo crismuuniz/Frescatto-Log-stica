@@ -603,54 +603,27 @@ def relatorio_excel():
         as_attachment=True,
         mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
-
-# ==============================================================================
-# NOVAS FUNCIONALIDADES: Cálculo em tempo real e OCR (Adicione ao final do main.py)
-# ==============================================================================
-
-# Rota para cálculo instantâneo (útil para o Front-end fazer o "Preview" antes de salvar)
-@app.route("/api/calcular-frete", methods=["POST"])
-def api_calcular():
-    dados = request.json
-    veiculo = dados.get("veiculo")
-    km = float(dados.get("km", 0))
-    pedagio = float(dados.get("pedagio", 0))
-    diaria = float(dados.get("diaria", 0))
-    
-    valor = calcular_frete_por_veiculo(veiculo, km, pedagio, diaria)
-    return jsonify({"valor_total": valor})
-
-# Rota para extração de dados via OCR (Canhotos)
-@app.route("/api/ocr-canhoto", methods=["POST"])
-def ocr_canhoto():
-    if 'imagem' not in request.files:
-        return jsonify({"erro": "Nenhuma imagem enviada"}), 400
-    
-    imagem = Image.open(request.files['imagem'])
-    texto = pytesseract.image_to_string(imagem, lang='por')
-    
-    # Exemplo de extração de Romaneio/Nota que geralmente aparece em canhotos
-    # Adapte o regex conforme o padrão do seu documento
-    match_romaneio = re.search(r'(?:romaneio|nº|nota)[:.\s]+(\d+)', texto, re.IGNORECASE)
-    
-    return jsonify({
-        "status": "ok",
-        "romaneio_detectado": match_romaneio.group(1) if match_romaneio else None,
-        "texto_bruto": texto[:500] # Retorna o comecinho para depuração
-    })
-
+# Rota unificada para processamento de OCR
 @app.route("/api/ocr", methods=["POST"])
 def ocr_route():
+    # O front-end envia como 'file', então verificamos 'file'
     if "file" not in request.files:
         return jsonify({"sucesso": False, "erro": "Nenhum arquivo enviado"}), 400
     
     try:
         file = request.files["file"]
+        # Abre a imagem diretamente do stream (mais rápido e eficiente)
         img = Image.open(file.stream)
         texto = pytesseract.image_to_string(img, lang='por')
         
-        # Exemplo simples de retorno para o Front-end
-        return jsonify({"sucesso": True, "resultado": texto[:200]})
+        # Extração inteligente básica
+        match_romaneio = re.search(r'(?:romaneio|nº|nota)[:.\s]+(\d+)', texto, re.IGNORECASE)
+        
+        return jsonify({
+            "sucesso": True, 
+            "resultado": texto[:500], # Retorna trecho do texto
+            "romaneio": match_romaneio.group(1) if match_romaneio else None
+        })
     except Exception as e:
         return jsonify({"sucesso": False, "erro": str(e)}), 500
 

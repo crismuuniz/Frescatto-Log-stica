@@ -119,11 +119,19 @@ init_db()
 
 @app.route("/")
 def home():
-    return render_template("index.html")
+    return render_template("index.html")
 
 @app.route("/canhotos")
 def canhotos_page():
-    return render_template("canhotos.html")
+    return render_template("canhotos.html")
+
+@app.route("/rotas")
+def rotas_page():
+    return render_template("rotas.html")
+
+@app.route("/fretes")
+def fretes_page():
+   return render_template("canhotos.html")
 
 @app.route("/rotas")
 def rotas_page():
@@ -630,6 +638,21 @@ def ocr_canhoto():
         "romaneio_detectado": match_romaneio.group(1) if match_romaneio else None,
         "texto_bruto": texto[:500] # Retorna o comecinho para depuração
     })
+
+@app.route("/api/ocr", methods=["POST"])
+def ocr_route():
+    if "file" not in request.files:
+        return jsonify({"sucesso": False, "erro": "Nenhum arquivo enviado"}), 400
+    
+    try:
+        file = request.files["file"]
+        img = Image.open(file.stream)
+        texto = pytesseract.image_to_string(img, lang='por')
+        
+        # Exemplo simples de retorno para o Front-end
+        return jsonify({"sucesso": True, "resultado": texto[:200]})
+    except Exception as e:
+        return jsonify({"sucesso": False, "erro": str(e)}), 500
 
 if __name__ == "__main__":
     app.run(

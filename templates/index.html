@@ -176,6 +176,37 @@
         <code>/relatorio/intervalo/excel?inicio=2026-06-01&fim=2026-06-30</code>
     </div>
 
+    <div style="margin-top: 20px; padding: 20px; background: #fff; border: 1px solid #c00000; border-radius: 8px;">
+        <h3>📷 Processamento Inteligente (OCR)</h3>
+        <p style="font-size: 14px;">Selecione o arquivo do canhoto para leitura automática:</p>
+        <input type="file" id="fileInput" accept="image/*">
+        <button onclick="processarOCR()" style="background: #c00000; color: white; border: none; padding: 10px 20px; cursor: pointer;">
+            Ler Canhoto
+        </button>
+    </div>
+    
+    <script>
+    async function processarOCR() {
+        const input = document.getElementById('fileInput');
+        if (!input.files[0]) return alert("Selecione uma imagem primeiro!");
+        
+        const formData = new FormData();
+        formData.append("file", input.files[0]);
+    
+        alert("Processando... aguarde.");
+        
+        const res = await fetch("/api/ocr", { method: "POST", body: formData });
+        const data = await res.json();
+        
+        if (data.sucesso) {
+            alert("Leitura concluída! Dados: " + JSON.stringify(data.resultado));
+            // Aqui você pode redirecionar para o formulário de canhotos com os dados preenchidos
+        } else {
+            alert("Erro: " + data.erro);
+        }
+    }
+    </script>
+
 </div>
 
 <script>

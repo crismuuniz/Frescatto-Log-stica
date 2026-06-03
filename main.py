@@ -17,9 +17,7 @@ app = Flask(__name__)
 
 # Se estiver rodando localmente no Windows e precisar apontar o Tesseract, mude aqui:
 # pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
-
-# ==================================
-# TABELA DE TARIFAS E REGRA DE NEGÓCIO (PAGAMENTO POR KM)
+ARIFAS E REGRA DE NEGÓCIO (PAGAMENTO POR KM)
 # ==================================
 
 # ==================================

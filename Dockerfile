@@ -22,4 +22,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 EXPOSE 3000
 
 # Comando para iniciar a aplicação
-CMD ["gunicorn", "app:app", "--bind", "0.0.0.0:3000"]
+CMD ["gunicorn", "main:app", "--bind", "0.0.0.0:3000"]

@@ -288,42 +288,26 @@ function gerarExcel() {
 }
 
 async function processarOCR() {
+    let formData = new FormData();
+    formData.append("file", document.getElementById("fileInput").files[0]);
 
-    const input = document.getElementById("fileInput");
+    // 1. Chama a rota de OCR que criamos
+    let response = await fetch("/api/ocr", { method: "POST", body: formData });
+    let data = await response.json();
 
-    if (!input.files.length) {
-        alert("Selecione uma imagem.");
-        return;
-    }
-
-    const formData = new FormData();
-    formData.append("file", input.files[0]);
-
-    try {
-
-        const response = await fetch("/api/ocr", {
+    if (data.sucesso) {
+        // 2. Com os dados extraídos, chama a rota de salvar canhoto
+        await fetch("/api/canhotos", {
             method: "POST",
-            body: formData
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                nota_fiscal: data.dados.nota_fiscal,
+                cliente: data.dados.cliente,
+                status: "Entregue"
+            })
         });
-
-        const data = await response.json();
-
-        if (!data.sucesso) {
-            alert(data.erro);
-            return;
-        }
-
-        const resultado = document.getElementById("resultadoOCR");
-
-        resultado.style.display = "block";
-        resultado.innerHTML =
-            "<strong>Texto identificado:</strong><br><br>" +
-            (data.resultado || "Nenhum texto encontrado");
-
-    } catch (erro) {
-
-        alert("Erro ao processar OCR.");
-        console.error(erro);
+        alert("Canhoto processado e salvo com sucesso!");
+    
     }
 }
 </script>

@@ -19,7 +19,7 @@ import os
 # Forçar o caminho do Tesseract no servidor Render
 if os.path.exists('/usr/bin/tesseract'):
     pytesseract.pytesseract.tesseract_cmd = '/usr/bin/tesseract'
-    
+
 app = Flask(__name__)
 
 # Se estiver rodando localmente no Windows e precisar apontar o Tesseract, mude aqui:
@@ -668,24 +668,27 @@ def relatorio_pdf():
 @app.route("/api/ocr", methods=["POST"])
 def ocr_route():
     if "file" not in request.files:
-        return jsonify({"sucesso": False, "erro": "Nenhum arquivo enviado"}), 400
+        return jsonify({"erro": "Nenhum arquivo enviado"}), 400
     
+    file = request.files["file"]
     try:
-        file = request.files["file"]
-        # Abrir imagem e processar
-        img = Image.open(file.stream)
+        img = Image.open(file.stream).convert('L')
         texto = pytesseract.image_to_string(img, lang='por')
         
-        # Extração de dados
-        match_romaneio = re.search(r'(?:romaneio|nº|nota)[:.\s]+(\d+)', texto, re.IGNORECASE)
+        # Regex para extrair dados do canhoto
+        nf_match = re.search(r'(?:nota|nf|nº)[:.\s]+(\d+)', texto, re.IGNORECASE)
+        cliente_match = re.search(r'(?:cliente|destinatario)[:.\s]+([^\n\r]+)', texto, re.IGNORECASE)
         
-        return jsonify({
-            "sucesso": True, 
-            "resultado": texto[:500], 
-            "romaneio": match_romaneio.group(1) if match_romaneio else None
-        })
+        dados_extraidos = {
+            "nota_fiscal": nf_match.group(1) if nf_match else "NÃO IDENTIFICADO",
+            "cliente": cliente_match.group(1).strip() if cliente_match else "NÃO IDENTIFICADO",
+            "status": "Processado via OCR"
+        }
+        
+        return jsonify({"sucesso": True, "dados": dados_extraidos})
     except Exception as e:
-        return jsonify({"sucesso": False, "erro": str(e)}), 500
+        return jsonify({"erro": str(e)}), 500
 
+        
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 3000)))

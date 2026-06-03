@@ -13,6 +13,13 @@ from openpyxl.utils import get_column_letter
 from PIL import Image
 import pytesseract
 
+import pytesseract
+import os
+
+# Forçar o caminho do Tesseract no servidor Render
+if os.path.exists('/usr/bin/tesseract'):
+    pytesseract.pytesseract.tesseract_cmd = '/usr/bin/tesseract'
+    
 app = Flask(__name__)
 
 # Se estiver rodando localmente no Windows e precisar apontar o Tesseract, mude aqui:

@@ -1,254 +1,331 @@
-me envie o codigo atualizado: <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <title>Sistema Logística</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema Logístico</title>
 
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #f4f4f4;
-            padding: 40px 20px;
-            margin: 0;
-        }
+    <style>
+        *{
+            margin:0;
+            padding:0;
+            box-sizing:border-box;
+        }
 
-        .container {
-            max-width: 900px;
-            margin: auto;
-        }
+        body{
+            font-family:Arial, Helvetica, sans-serif;
+            background:#f4f6f9;
+            color:#333;
+        }
 
-        h1 {
-            color: #333;
-            margin-bottom: 30px;
-            text-align: center;
-        }
+        .header{
+            background:#c00000;
+            color:white;
+            padding:25px;
+            text-align:center;
+            box-shadow:0 2px 10px rgba(0,0,0,.15);
+        }
 
-        .card {
-            background: white;
-            padding: 25px;
-            margin-bottom: 25px;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-        }
+        .header h1{
+            font-size:32px;
+        }
 
-        .card h3 {
-            margin-top: 0;
-            margin-bottom: 20px;
-            color: #444;
-            border-bottom: 2px solid #eee;
-            padding-bottom: 10px;
-        }
+        .container{
+            max-width:1200px;
+            margin:30px auto;
+            padding:0 20px;
+        }
 
-        /* Grid de Links de Navegação */
-        .menu-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 15px;
-        }
+        .card{
+            background:white;
+            border-radius:12px;
+            padding:25px;
+            margin-bottom:25px;
+            box-shadow:0 4px 12px rgba(0,0,0,.08);
+        }
 
-        .menu-item {
-            text-decoration: none;
-            color: #333;
-            font-size: 18px;
-            font-weight: bold;
-            background: #f8f9fa;
-            padding: 20px 15px;
-            border-radius: 8px;
-            text-align: center;
-            border: 1px solid #e2e8f0;
-            transition: all 0.2s ease;
-        }
+        .card h2{
+            margin-bottom:20px;
+            color:#444;
+            border-bottom:2px solid #eee;
+            padding-bottom:10px;
+        }
 
-        .menu-item:hover {
-            background: #007bff;
-            color: white;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 10px rgba(0,123,255,0.2);
-        }
+        .menu-grid{
+            display:grid;
+            grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+            gap:15px;
+        }
 
-        /* Inputs e Filtros */
-        .form-group {
-            margin-bottom: 15px;
-        }
+        .menu-item{
+            text-decoration:none;
+            color:#333;
+            background:#f8f9fa;
+            border:1px solid #ddd;
+            border-radius:10px;
+            padding:20px;
+            text-align:center;
+            font-weight:bold;
+            font-size:17px;
+            transition:.3s;
+        }
 
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-            color: #555;
-        }
+        .menu-item:hover{
+            background:#c00000;
+            color:white;
+            transform:translateY(-3px);
+        }
 
-        input[type="date"] {
-            padding: 10px;
-            width: 100%;
-            box-sizing: border-box;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            font-size: 16px;
-        }
+        .form-group{
+            margin-bottom:15px;
+        }
 
-        /* Botões de Relatório */
-        .btn-group {
-            display: flex;
-            gap: 15px;
-            margin-top: 20px;
-        }
+        label{
+            display:block;
+            margin-bottom:6px;
+            font-weight:bold;
+        }
 
-        button {
-            flex: 1;
-            padding: 12px;
-            cursor: pointer;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            font-size: 16px;
-            font-weight: bold;
-            transition: opacity 0.2s;
-        }
+        input[type="date"],
+        input[type="file"]{
+            width:100%;
+            padding:12px;
+            border:1px solid #ccc;
+            border-radius:6px;
+        }
 
-        button:hover {
-            opacity: 0.9;
-        }
+        .btn-group{
+            display:flex;
+            gap:15px;
+            flex-wrap:wrap;
+            margin-top:20px;
+        }
 
-        .btn-pdf {
-            background: #e04f3a; /* Vermelho/Laranja PDF */
-        }
+        button{
+            border:none;
+            border-radius:6px;
+            padding:12px 20px;
+            cursor:pointer;
+            color:white;
+            font-size:15px;
+            font-weight:bold;
+            transition:.3s;
+        }
 
-        .btn-excel {
-            background: #1e7e34; /* Verde Excel */
-        }
+        button:hover{
+            opacity:.9;
+        }
 
-        hr {
-            border: 0;
-            border-top: 1px solid #eee;
-            margin: 25px 0 15px 0;
-        }
+        .btn-pdf{
+            background:#e74c3c;
+            flex:1;
+        }
 
-        code {
-            background: #f1f1f1;
-            padding: 4px 8px;
-            border-radius: 4px;
-            display: inline-block;
-            margin-bottom: 5px;
-            font-size: 14px;
-            color: #c7254e;
-        }
-    </style>
+        .btn-excel{
+            background:#27ae60;
+            flex:1;
+        }
+
+        .btn-ocr{
+            background:#c00000;
+            margin-top:15px;
+        }
+
+        .info{
+            margin-top:15px;
+            color:#666;
+            font-size:14px;
+        }
+
+        code{
+            display:block;
+            margin-top:8px;
+            padding:10px;
+            background:#f1f1f1;
+            border-radius:6px;
+            overflow:auto;
+        }
+
+        #resultadoOCR{
+            margin-top:15px;
+            padding:15px;
+            background:#f8f9fa;
+            border-radius:6px;
+            display:none;
+            white-space:pre-wrap;
+        }
+
+        @media(max-width:768px){
+            .btn-group{
+                flex-direction:column;
+            }
+
+            .header h1{
+                font-size:24px;
+            }
+        }
+    </style>
 </head>
 <body>
 
+<div class="header">
+    <h1>🚚 Sistema Logístico</h1>
+    <p>Controle de Rotas, Fretes, Canhotos e Devoluções</p>
+</div>
+
 <div class="container">
 
-    <h1>🚚 Sistema de Logística</h1>
+    <div class="card">
+        <h2>📦 Módulos do Sistema</h2>
 
-    <div class="card">
-        <h3>Módulos do Sistema</h3>
-        <div class="menu-grid">
-            <a href="/canhotos" class="menu-item">📄 Canhotos</a>
-            <a href="/roteiros" class="menu-item">🛣️ Roteiros</a>
-            <a href="/devolucoes" class="menu-item">↩️ Devoluções</a>
-            <a href="/fretes" class="menu-item">💰 Fretes</a>
-        </div>
-    </div>
+        <div class="menu-grid">
+            <a href="/rotas" class="menu-item">🚚 Rotas</a>
+            <a href="/roteiros" class="menu-item">🛣️ Roteiros</a>
+            <a href="/fretes" class="menu-item">💰 Fretes</a>
+            <a href="/canhotos" class="menu-item">📄 Canhotos</a>
+            <a href="/devolucoes" class="menu-item">↩️ Devoluções</a>
+            <a href="/relatorios" class="menu-item">📊 Relatórios</a>
+        </div>
+    </div>
 
-    <div class="card">
-        <h3>📊 Exportar Relatórios por Período</h3>
+    <div class="card">
+        <h2>📊 Exportar Relatórios</h2>
 
-        <div class="form-group">
-            <label for="inicio">Data Inicial:</label>
-            <input type="date" id="inicio">
-        </div>
+        <div class="form-group">
+            <label>Data Inicial</label>
+            <input type="date" id="inicio">
+        </div>
 
-        <div class="form-group">
-            <label for="fim">Data Final:</label>
-            <input type="date" id="fim">
-        </div>
+        <div class="form-group">
+            <label>Data Final</label>
+            <input type="date" id="fim">
+        </div>
 
-        <div class="btn-group">
-            <button onclick="gerarPDF()" class="btn-pdf">📄 Gerar PDF</button>
-            <button onclick="gerarExcel()" class="btn-excel">📊 Gerar Excel</button>
-        </div>
+        <div class="btn-group">
+            <button class="btn-pdf" onclick="gerarPDF()">
+                📄 Gerar PDF
+            </button>
 
-        <hr>
+            <button class="btn-excel" onclick="gerarExcel()">
+                📊 Gerar Excel
+            </button>
+        </div>
 
-        <p style="color:#666; font-size:14px;"><b>Exemplo de endpoints manuais de consulta:</b></p>
-        <code>/relatorio/intervalo/pdf?inicio=2026-06-01&fim=2026-06-30</code><br>
-        <code>/relatorio/intervalo/excel?inicio=2026-06-01&fim=2026-06-30</code>
-    </div>
+        <div class="info">
+            <strong>Exemplos de endpoints:</strong>
 
-    <div style="margin-top: 20px; padding: 20px; background: #fff; border: 1px solid #c00000; border-radius: 8px;">
-        <h3>📷 Processamento Inteligente (OCR)</h3>
-        <p style="font-size: 14px;">Selecione o arquivo do canhoto para leitura automática:</p>
-        <input type="file" id="fileInput" accept="image/*">
-        <button onclick="processarOCR()" style="background: #c00000; color: white; border: none; padding: 10px 20px; cursor: pointer;">
-            Ler Canhoto
-        </button>
-    </div>
-    
-    <script>
-    async function processarOCR() {
-        const input = document.getElementById('fileInput');
-        if (!input.files[0]) return alert("Selecione uma imagem primeiro!");
-        
-        const formData = new FormData();
-        formData.append("file", input.files[0]);
-    
-        alert("Processando... aguarde.");
-        
-        const res = await fetch("/api/ocr", { method: "POST", body: formData });
-        const data = await res.json();
-        
-        if (data.sucesso) {
-            alert("Leitura concluída! Dados: " + JSON.stringify(data.resultado));
-            // Aqui você pode redirecionar para o formulário de canhotos com os dados preenchidos
-        } else {
-            alert("Erro: " + data.erro);
-        }
-    }
-    </script>
+            <code>/relatorio/intervalo/pdf?inicio=2026-06-01&fim=2026-06-30</code>
+
+            <code>/relatorio/intervalo/excel?inicio=2026-06-01&fim=2026-06-30</code>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>📷 Leitura Inteligente de Canhotos (OCR)</h2>
+
+        <input type="file" id="fileInput" accept="image/*">
+
+        <button class="btn-ocr" onclick="processarOCR()">
+            Ler Documento
+        </button>
+
+        <div id="resultadoOCR"></div>
+    </div>
 
 </div>
 
 <script>
-    // Executa assim que a página carrega para preencher o mês atual automaticamente
-    window.addEventListener("DOMContentLoaded", () => {
-        const hoje = new Date();
-        
-        // Formata o ano e mês atuais
-        const ano = hoje.getFullYear();
-        const mes = String(hoje.getMonth() + 1).padStart(2, '0');
-        const dia = String(hoje.getDate()).padStart(2, '0');
+window.addEventListener("DOMContentLoaded", () => {
 
-        // Primeiro dia do mês atual: AAAA-MM-01
-        document.getElementById("inicio").value = `${ano}-${mes}-01`;
-        // Dia de hoje no formato internacional: AAAA-MM-DD
-        document.getElementById("fim").value = `${ano}-${mes}-${dia}`;
-    });
+    const hoje = new Date();
 
-    function validarDatas() {
-        const inicio = document.getElementById("inicio").value;
-        const fim = document.getElementById("fim").value;
+    const ano = hoje.getFullYear();
+    const mes = String(hoje.getMonth() + 1).padStart(2, "0");
+    const dia = String(hoje.getDate()).padStart(2, "0");
 
-        if (!inicio || !fim) {
-            alert("Por favor, selecione ambas as datas para prosseguir.");
-            return null;
-        }
-        return { inicio, fim };
-    }
+    document.getElementById("inicio").value =
+        `${ano}-${mes}-01`;
 
-    function gerarPDF() {
-        const datas = validarDatas();
-        if (!datas) return;
+    document.getElementById("fim").value =
+        `${ano}-${mes}-${dia}`;
+});
 
-        window.open(`/relatorio/intervalo/pdf?inicio=${datas.inicio}&fim=${datas.fim}`, "_blank");
-    }
+function validarDatas() {
 
-    function gerarExcel() {
-        const datas = validarDatas();
-        if (!datas) return;
+    const inicio = document.getElementById("inicio").value;
+    const fim = document.getElementById("fim").value;
 
-        window.open(`/relatorio/intervalo/excel?inicio=${datas.inicio}&fim=${datas.fim}`, "_blank");
-    }
+    if (!inicio || !fim) {
+        alert("Selecione as datas.");
+        return null;
+    }
+
+    return { inicio, fim };
+}
+
+function gerarPDF() {
+
+    const datas = validarDatas();
+
+    if (!datas) return;
+
+    window.open(
+        `/relatorio/intervalo/pdf?inicio=${datas.inicio}&fim=${datas.fim}`,
+        "_blank"
+    );
+}
+
+function gerarExcel() {
+
+    const datas = validarDatas();
+
+    if (!datas) return;
+
+    window.open(
+        `/relatorio/intervalo/excel?inicio=${datas.inicio}&fim=${datas.fim}`,
+        "_blank"
+    );
+}
+
+async function processarOCR() {
+
+    const input = document.getElementById("fileInput");
+
+    if (!input.files.length) {
+        alert("Selecione uma imagem.");
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append("file", input.files[0]);
+
+    try {
+
+        const response = await fetch("/api/ocr", {
+            method: "POST",
+            body: formData
+        });
+
+        const data = await response.json();
+
+        if (!data.sucesso) {
+            alert(data.erro);
+            return;
+        }
+
+        const resultado = document.getElementById("resultadoOCR");
+
+        resultado.style.display = "block";
+        resultado.innerHTML =
+            "<strong>Texto identificado:</strong><br><br>" +
+            (data.resultado || "Nenhum texto encontrado");
+
+    } catch (erro) {
+
+        alert("Erro ao processar OCR.");
+        console.error(erro);
+    }
+}
 </script>
 
 </body>

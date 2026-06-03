@@ -1,212 +1,412 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <title>Relatório do Sistema - Frescatto</title>
-    <style>
-        body {
-            font-family: 'Segoe UI', Arial, sans-serif;
-            padding: 30px;
-            background: #f1f2f6;
-            color: #2f3542;
-        }
+<meta charset="UTF-8">
+<title>Relatório Logístico - Frescatto</title>
 
-        .container {
-            max-width: 1100px;
-            margin: auto;
-            background: white;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-        }
+<style>
 
-        h1 {
-            color: #c00000; /* Vermelho Frescatto */
-            margin-top: 0;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
+body{
+    font-family:'Segoe UI',Arial,sans-serif;
+    background:#f1f2f6;
+    padding:30px;
+    color:#2f3542;
+}
 
-        h2 {
-            margin-top: 35px;
-            color: #2f3542;
-            border-bottom: 2px solid #c00000;
-            padding-bottom: 8px;
-            font-size: 1.3rem;
-        }
+.container{
+    max-width:1300px;
+    margin:auto;
+    background:white;
+    padding:30px;
+    border-radius:12px;
+    box-shadow:0 4px 10px rgba(0,0,0,.08);
+}
 
-        .badge {
-            display: inline-block;
-            padding: 5px 12px;
-            border-radius: 20px;
-            background: #2f3542;
-            color: white;
-            font-size: 13px;
-            font-weight: bold;
-        }
+h1{
+    margin-top:0;
+    color:#c00000;
+}
 
-        /* Tabelas Estilizadas */
-        .table-responsive {
-            overflow-x: auto;
-            margin-top: 10px;
-        }
+h2{
+    margin-top:40px;
+    border-bottom:3px solid #c00000;
+    padding-bottom:8px;
+}
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 15px;
-            font-size: 14px;
-            text-align: left;
-        }
+.topo{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:15px;
+}
 
-        th {
-            background: #2f3542; /* Grafite Escuro */
-            color: white;
-            padding: 10px 12px;
-            font-weight: 600;
-        }
+.btns{
+    display:flex;
+    gap:10px;
+}
 
-        td {
-            padding: 10px 12px;
-            border-bottom: 1px solid #e4e7eb;
-        }
+.btn{
+    text-decoration:none;
+    color:white;
+    padding:10px 20px;
+    border-radius:6px;
+    font-weight:bold;
+}
 
-        tr:nth-child(even) td {
-            background: #f8f9fa; /* Efeito Zebra */
-        }
+.pdf{
+    background:#d63031;
+}
 
-        .empty {
-            color: #a4b0be;
-            font-style: italic;
-            padding: 15px;
-            background: #f8f9fa;
-            border-radius: 6px;
-            text-align: center;
-            border: 1px dashed #ced6e0;
-        }
+.excel{
+    background:#27ae60;
+}
 
-        .text-right {
-            text-align: right;
-        }
-        
-        .negrito {
-            font-weight: bold;
-        }
-    </style>
+.cards{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    gap:15px;
+    margin-top:25px;
+}
+
+.card{
+    background:#2f3542;
+    color:white;
+    padding:20px;
+    border-radius:10px;
+}
+
+.card .valor{
+    font-size:28px;
+    font-weight:bold;
+    margin-top:8px;
+}
+
+.table-responsive{
+    overflow-x:auto;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+    margin-top:15px;
+}
+
+th{
+    background:#2f3542;
+    color:white;
+    padding:12px;
+}
+
+td{
+    padding:10px;
+    border-bottom:1px solid #ddd;
+}
+
+tr:nth-child(even){
+    background:#f8f9fa;
+}
+
+.text-right{
+    text-align:right;
+}
+
+.badge{
+    padding:4px 10px;
+    border-radius:15px;
+    color:white;
+    font-size:12px;
+    font-weight:bold;
+}
+
+.recebido{
+    background:#2ecc71;
+}
+
+.pendente{
+    background:#e74c3c;
+}
+
+.andamento{
+    background:#f39c12;
+}
+
+.empty{
+    text-align:center;
+    padding:20px;
+    color:#888;
+    border:1px dashed #ccc;
+    border-radius:6px;
+    margin-top:10px;
+}
+
+</style>
 </head>
 <body>
 
 <div class="container">
 
-    <h1>📊 Relatório Logístico Frescatto</h1>
-    <p><span class="badge">{{ data }}</span></p>
+    <div class="topo">
+        <div>
+            <h1>📊 Relatório Logístico Frescatto</h1>
+            <small>{{ data }}</small>
+        </div>
 
-    <h2>🚚 Movimentação de Rotas e Fretes ({{ rotas|length if rotas else 0 }})</h2>
-    <div class="table-responsive">
-        {% if rotas %}
-            <table>
-                <thead>
-                    <tr>
-                        <th>Carga</th>
-                        <th>Data</th>
-                        <th>Motorista</th>
-                        <th>Placa / Veículo</th>
-                        <th>Rota</th>
-                        <th class="text-right">Entregas</th>
-                        <th class="text-right">Peso</th>
-                        <th class="text-right">Pedágio + Diária</th>
-                        <th class="text-right">Valor Frete</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for r in rotas %}
-                    <tr>
-                        <td class="negrito">{{ r.carga }}</td>
-                        <td>{{ r.data_carga }}</td>
-                        <td>{{ r.motorista }}</td>
-                        <td><small>{{ r.placa }}<br>{{ r.veiculo }}</small></td>
-                        <td><small class="negrito">[{{ r.codigo_roteiro }}]</small> {{ r.descricao_rota }}</td>
-                        <td class="text-right">{{ r.quantidade_entregas }}</td>
-                        <td class="text-right">{{ "%.2f"|format(r.peso) }} kg</td>
-                        <td class="text-right">R$ {{ "%.2f"|format(r.pedagio + r.diaria) }}</td>
-                        <td class="text-right negrito" style="color: #c00000;">R$ {{ "%.2f"|format(r.valor_frete) }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        {% else %}
-            <div class="empty">Nenhuma movimentação de rota cadastrada no período.</div>
-        {% endif %}
+        <div class="btns">
+            <a href="/relatorio/intervalo/pdf" class="btn pdf">
+                📄 PDF
+            </a>
+
+            <a href="/relatorio/intervalo/excel" class="btn excel">
+                📊 Excel
+            </a>
+        </div>
     </div>
 
-    <h2>📄 Controle de Canhotos ({{ canhotos|length if canhotos else 0 }})</h2>
-    <div class="table-responsive">
-        {% if canhotos %}
-            <table>
-                <thead>
-                    <tr>
-                        <th>Nota Fiscal</th>
-                        <th>Carga</th>
-                        <th>Cliente / Destinatário</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for c in canhotos %}
-                    <tr>
-                        <td class="negrito">{{ c.nota_fiscal }}</td>
-                        <td>{{ c.carga }}</td>
-                        <td>{{ c.cliente }}</td>
-                        <td>
-                            <span style="padding: 3px 8px; border-radius: 4px; font-size: 12px; font-weight: bold;
-                                background: {% if c.status|lower == 'recebido' %}#2ed573; color: white;{% else %}#ffa502; color: white;{% endif %}">
-                                {{ c.status }}
-                            </span>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        {% else %}
-            <div class="empty">Nenhum canhoto registrado.</div>
-        {% endif %}
+    <!-- DASHBOARD -->
+
+    <div class="cards">
+
+        <div class="card">
+            🚚 Rotas
+            <div class="valor">
+                {{ rotas|length }}
+            </div>
+        </div>
+
+        <div class="card">
+            📄 Canhotos
+            <div class="valor">
+                {{ canhotos|length }}
+            </div>
+        </div>
+
+        <div class="card">
+            📦 Devoluções
+            <div class="valor">
+                {{ devolucoes|length }}
+            </div>
+        </div>
+
+        <div class="card">
+            💰 Faturamento
+            <div class="valor">
+                R$
+                {{
+                    "%.2f"|format(
+                    rotas|sum(attribute='valor_frete')
+                    if rotas else 0
+                    )
+                }}
+            </div>
+        </div>
+
     </div>
 
-    <h2>📦 Histórico de Devoluções ({{ devolucoes|length if devolucoes else 0 }})</h2>
+    <!-- ROTAS -->
+
+    <h2>
+        🚚 Rotas e Fretes
+        ({{ rotas|length }})
+    </h2>
+
+    {% if rotas %}
+
     <div class="table-responsive">
-        {% if devolucoes %}
-            <table>
-                <thead>
-                    <tr>
-                        <th>Nota Fiscal</th>
-                        <th>Cliente</th>
-                        <th>Motivo da Devolução</th>
-                        <th>Data</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for d in devolucoes %}
-                    <tr>
-                        <td class="negrito">{{ d.nota_fiscal }}</td>
-                        <td>{{ d.cliente }}</td>
-                        <td>{{ d.motivo }}</td>
-                        <td>{{ d.data }}</td>
-                        <td>
-                            <span style="padding: 3px 8px; border-radius: 4px; font-size: 12px; font-weight: bold;
-                                background: {% if d.status|lower == 'pendente' %}#ff4757; color: white;{% else %}#2ed573; color: white;{% endif %}">
-                                {{ d.status }}
-                            </span>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        {% else %}
-            <div class="empty">Nenhuma devolução registrada.</div>
-        {% endif %}
+
+        <table>
+
+            <thead>
+            <tr>
+                <th>Carga</th>
+                <th>Data</th>
+                <th>Motorista</th>
+                <th>Veículo</th>
+                <th>KM</th>
+                <th>Entregas</th>
+                <th>Pedágio</th>
+                <th>Diária</th>
+                <th>Frete</th>
+            </tr>
+            </thead>
+
+            <tbody>
+
+            {% for r in rotas %}
+            <tr>
+
+                <td>{{ r.carga }}</td>
+
+                <td>{{ r.data_carga }}</td>
+
+                <td>{{ r.motorista }}</td>
+
+                <td>
+                    {{ r.veiculo }}
+                    <br>
+                    <small>{{ r.placa }}</small>
+                </td>
+
+                <td class="text-right">
+                    {{ "%.0f"|format(r.km or 0) }}
+                </td>
+
+                <td class="text-right">
+                    {{ r.quantidade_entregas or 0 }}
+                </td>
+
+                <td class="text-right">
+                    R$ {{ "%.2f"|format(r.pedagio or 0) }}
+                </td>
+
+                <td class="text-right">
+                    R$ {{ "%.2f"|format(r.diaria or 0) }}
+                </td>
+
+                <td class="text-right">
+                    <strong style="color:#c00000">
+                        R$ {{ "%.2f"|format(r.valor_frete or 0) }}
+                    </strong>
+                </td>
+
+            </tr>
+            {% endfor %}
+
+            </tbody>
+
+        </table>
+
     </div>
+
+    {% else %}
+        <div class="empty">
+            Nenhuma rota cadastrada.
+        </div>
+    {% endif %}
+
+    <!-- CANHOTOS -->
+
+    <h2>
+        📄 Controle de Canhotos
+        ({{ canhotos|length }})
+    </h2>
+
+    {% if canhotos %}
+
+    <div class="table-responsive">
+
+        <table>
+
+            <thead>
+            <tr>
+                <th>NF</th>
+                <th>Cliente</th>
+                <th>Carga</th>
+                <th>Data Entrega</th>
+                <th>Status</th>
+            </tr>
+            </thead>
+
+            <tbody>
+
+            {% for c in canhotos %}
+            <tr>
+
+                <td>{{ c.nota_fiscal }}</td>
+                <td>{{ c.cliente }}</td>
+                <td>{{ c.carga }}</td>
+                <td>{{ c.data_entrega }}</td>
+
+                <td>
+
+                    {% if c.status|lower == "recebido" %}
+                        <span class="badge recebido">
+                            {{ c.status }}
+                        </span>
+                    {% else %}
+                        <span class="badge andamento">
+                            {{ c.status }}
+                        </span>
+                    {% endif %}
+
+                </td>
+
+            </tr>
+            {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+    {% else %}
+        <div class="empty">
+            Nenhum canhoto registrado.
+        </div>
+    {% endif %}
+
+    <!-- DEVOLUÇÕES -->
+
+    <h2>
+        📦 Devoluções
+        ({{ devolucoes|length }})
+    </h2>
+
+    {% if devolucoes %}
+
+    <div class="table-responsive">
+
+        <table>
+
+            <thead>
+            <tr>
+                <th>NF</th>
+                <th>Cliente</th>
+                <th>Motivo</th>
+                <th>Data</th>
+                <th>Status</th>
+            </tr>
+            </thead>
+
+            <tbody>
+
+            {% for d in devolucoes %}
+            <tr>
+
+                <td>{{ d.nota_fiscal }}</td>
+                <td>{{ d.cliente }}</td>
+                <td>{{ d.motivo }}</td>
+                <td>{{ d.data }}</td>
+
+                <td>
+
+                    {% if d.status|lower == "pendente" %}
+                        <span class="badge pendente">
+                            {{ d.status }}
+                        </span>
+                    {% else %}
+                        <span class="badge recebido">
+                            {{ d.status }}
+                        </span>
+                    {% endif %}
+
+                </td>
+
+            </tr>
+            {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+    {% else %}
+        <div class="empty">
+            Nenhuma devolução registrada.
+        </div>
+    {% endif %}
 
 </div>
 

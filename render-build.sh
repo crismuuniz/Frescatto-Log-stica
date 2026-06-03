@@ -1,3 +1,3 @@
 #!/usr/bin/env bash
 apt-get update
-apt-get install -y tesseract-ocr tesseract-ocr-por
+apt-get install -y tesseract-ocr tesseract-ocr-por libjpeg-dev zlib1g-dev

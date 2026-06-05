@@ -1,10 +1,11 @@
-FROM python:3.9-slim
+# Usando a versão completa em vez da slim para evitar conflitos de bibliotecas
+FROM python:3.9
 
-# Definir variáveis de ambiente para evitar interrupções
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Atualização mais robusta
-RUN apt-get update && apt-get install -y --no-install-recommends \
+# Atualização e instalação em passos separados para identificar onde trava
+RUN apt-get update 
+RUN apt-get install -y --no-install-recommends \
     tesseract-ocr \
     libtesseract-dev \
     libleptonica-dev \
@@ -20,5 +21,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-# Comando para rodar
 CMD ["gunicorn", "main:app", "--bind", "0.0.0.0:3000"]

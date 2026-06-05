@@ -672,23 +672,37 @@ def ocr_route():
         return jsonify({"erro": "Nenhum arquivo enviado"}), 400
     
     file = request.files["file"]
-    try:
-        img = Image.open(file.stream).convert('L')
-        texto = pytesseract.image_to_string(img, lang='por')
-        
-        # Regex para extrair dados do canhoto
-        nf_match = re.search(r'(?:nota|nf|nº)[:.\s]+(\d+)', texto, re.IGNORECASE)
-        cliente_match = re.search(r'(?:cliente|destinatario)[:.\s]+([^\n\r]+)', texto, re.IGNORECASE)
-        
-        dados_extraidos = {
-            "nota_fiscal": nf_match.group(1) if nf_match else "NÃO IDENTIFICADO",
-            "cliente": cliente_match.group(1).strip() if cliente_match else "NÃO IDENTIFICADO",
-            "status": "Processado via OCR"
-        }
-        
-        return jsonify({"sucesso": True, "dados": dados_extraidos})
-    except Exception as e:
-        return jsonify({"erro": str(e)}), 500
+    
+    # 1. Carregar imagem via OpenCV
+    file_bytes = np.frombuffer(file.read(), np.uint8)
+    img = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
+    
+    # 2. Pré-processamento avançado
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    
+    # Aumentar contraste (CLAHE) - Melhora muito a leitura em fotos de celular
+    clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8,8))
+    gray = clahe.apply(gray)
+    
+    # Binarização (Preto e Branco puro)
+    _, thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    
+    # 3. OCR no texto processado
+    texto = pytesseract.image_to_string(thresh, lang='por')
+    
+    # DEBUG: Ver o que foi lido
+    print(f"--- TEXTO LIDO PELO OCR ---\n{texto}\n---------------------------")
+    
+    # Regex (mantive a lógica, mas agora com texto muito mais limpo)
+    nf_match = re.search(r'(?:N[oº]|Nota|NF|Romaneio)[:.\s]+(\d{5,9})', texto, re.IGNORECASE)
+    cliente_match = re.search(r'(?:Cliente|Destinatário)[:.\s]+([A-ZÀ-Ÿ\s]+)', texto, re.IGNORECASE)
+    
+    dados = {
+        "nota_fiscal": nf_match.group(1) if nf_match else "NÃO IDENTIFICADO",
+        "cliente": cliente_match.group(1).strip() if cliente_match else "NÃO IDENTIFICADO"
+    }
+    
+    return jsonify({"sucesso": True, "dados": dados})
 
 def preprocessar_imagem(file_stream):
     img = Image.open(file_stream).convert('L') # Escala de cinzentos

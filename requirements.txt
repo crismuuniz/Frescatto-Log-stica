@@ -1,7 +1,6 @@
 flask
-pytesseract
-numpy
 pillow
 gunicorn
 pandas
 reportlab
+openpyxl

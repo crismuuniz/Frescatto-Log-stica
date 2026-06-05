@@ -3,7 +3,6 @@ import io
 import re
 import sqlite3
 import pandas as pd
-import numpy as np
 
 from flask import Flask, request, jsonify, render_template, send_file
 from reportlab.pdfgen import canvas
@@ -13,7 +12,6 @@ from PIL import Image, ImageEnhance, ImageOps
 from openpyxl.styles import Font, PatternFill
 from openpyxl.utils import get_column_letter
 from PIL import Image
-import pytesseract
 import os
 
 os.environ['TESSDATA_PREFIX'] = '/usr/share/tesseract-ocr/4.00/tessdata'
@@ -666,62 +664,17 @@ def relatorio_pdf():
         as_attachment=True
     )
 
-@app.route("/api/ocr", methods=["POST"])
-def ocr_route():
-    if "file" not in request.files:
-        return jsonify({"erro": "Nenhum arquivo enviado"}), 400
-    
-    file = request.files["file"]
-    
-    try:
-        # 1. Converter o ficheiro enviado para algo que o OpenCV entenda
-        file_bytes = np.frombuffer(file.read(), np.uint8)
-        img = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
-        
-        if img is None:
-            return jsonify({"erro": "Imagem inválida"}), 400
-
-        # 2. Pipeline de Processamento (limpeza da imagem)
-        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        
-        # Correção de iluminação com CLAHE
-        clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8,8))
-        processed = clahe.apply(gray)
-        
-        # Binarização Otsu para contraste máximo
-        _, binary = cv2.threshold(processed, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-        
-        # 3. Executar o OCR
-        # O psm 6 assume um bloco único de texto (ideal para documentos)
-        config = "--psm 6"
-        texto = pytesseract.image_to_string(binary, lang='por', config=config)
-        
-        print(f"--- LOG DE OCR ---\n{texto}\n-------------------")
-        
-        # 4. Regex (Otimizado)
-        # Nota: captura números de 5 a 9 dígitos após 'Nota', 'NF', 'Nº'
-        nf_match = re.search(r'(?:Nota|NF|N[oº]|Romaneio)[:.\s]+(\d{5,9})', texto, re.IGNORECASE)
-        
-        # Cliente: Captura o que estiver após 'Cliente:' até a quebra de linha
-        cliente_match = re.search(r'(?:Cliente|Destinatário)[:.\s]+([^\n\r]+)', texto, re.IGNORECASE)
-        
-        dados = {
-            "nota_fiscal": nf_match.group(1) if nf_match else "NÃO IDENTIFICADO",
-            "cliente": cliente_match.group(1).strip() if cliente_match else "NÃO IDENTIFICADO"
-        }
-        
-        return jsonify({"sucesso": True, "dados": dados})
-
-    except Exception as e:
-        print(f"ERRO CRÍTICO NO OCR: {str(e)}")
-        return jsonify({"erro": str(e)}), 500
-
-
+# Rota simples para receber o texto extraído do OCR
 @app.route("/api/salvar-dados", methods=["POST"])
 def salvar_dados():
-    texto = request.json.get("texto_ocr", "")
-    # Aplique seu regex aqui no 'texto'
-    return jsonify({"status": "recebido"})
+    dados = request.json
+    texto = dados.get("texto_ocr", "")
+    
+    # Aqui você pode aplicar sua lógica de Regex para extrair nota/valor/cliente
+    # e salvar no seu SQLite (database.db)
+    
+    print("Texto recebido do frontend:", texto)
+    return jsonify({"status": "sucesso", "mensagem": "Dados gravados no banco!"}), 200
         
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 3000)))

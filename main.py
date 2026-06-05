@@ -3,7 +3,6 @@ import io
 import re
 import sqlite3
 import pandas as pd
-import cv2
 import numpy as np
 
 from flask import Flask, request, jsonify, render_template, send_file

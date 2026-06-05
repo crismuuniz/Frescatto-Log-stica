@@ -4,29 +4,56 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistema Logístico</title>
-
     <script src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'></script>
 
     <style>
-        /* (Seu CSS permanece igual, não alterei para manter seu layout) */
         *{ margin:0; padding:0; box-sizing:border-box; }
         body{ font-family:Arial, Helvetica, sans-serif; background:#f4f6f9; color:#333; }
         .header{ background:#c00000; color:white; padding:25px; text-align:center; box-shadow:0 2px 10px rgba(0,0,0,.15); }
         .container{ max-width:1200px; margin:30px auto; padding:0 20px; }
         .card{ background:white; border-radius:12px; padding:25px; margin-bottom:25px; box-shadow:0 4px 12px rgba(0,0,0,.08); }
-        .btn-ocr{ background:#c00000; color:white; border:none; border-radius:6px; padding:12px 20px; cursor:pointer; font-weight:bold; margin-top:15px; }
+        .menu-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:15px; }
+        .menu-item{ text-decoration:none; color:#333; background:#f8f9fa; border:1px solid #ddd; border-radius:10px; padding:20px; text-align:center; font-weight:bold; transition:.3s; }
+        .menu-item:hover{ background:#c00000; color:white; }
+        .form-group{ margin-bottom:15px; }
+        .btn-group{ display:flex; gap:15px; margin-top:20px; }
+        button{ border:none; border-radius:6px; padding:12px 20px; cursor:pointer; color:white; font-weight:bold; }
+        .btn-ocr{ background:#c00000; margin-top:15px; }
         #resultadoOCR{ margin-top:15px; padding:15px; background:#f8f9fa; border-radius:6px; display:none; white-space:pre-wrap; border:1px solid #ddd; }
-        /* ... resto do seu CSS ... */
     </style>
 </head>
 <body>
 
 <div class="header">
     <h1>🚚 Sistema Logístico</h1>
-    <p>Controle de Rotas, Fretes, Canhotos e Devoluções</p>
 </div>
 
 <div class="container">
+    <div class="card">
+        <h2>📦 Módulos</h2>
+        <div class="menu-grid">
+            <a href="/rotas" class="menu-item">🚚 Rotas</a>
+            <a href="/fretes" class="menu-item">💰 Fretes</a>
+            <a href="/relatorios" class="menu-item">📊 Relatórios</a>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>📊 Exportar Relatórios</h2>
+        <div class="form-group">
+            <label>Data Inicial</label>
+            <input type="date" id="inicio">
+        </div>
+        <div class="form-group">
+            <label>Data Final</label>
+            <input type="date" id="fim">
+        </div>
+        <div class="btn-group">
+            <button class="btn-ocr" style="background:#e74c3c" onclick="gerarPDF()">📄 PDF</button>
+            <button class="btn-ocr" style="background:#27ae60" onclick="gerarExcel()">📊 Excel</button>
+        </div>
+    </div>
+
     <div class="card">
         <h2>📷 Leitura Inteligente de Canhotos (OCR)</h2>
         <input type="file" id="fileInput" accept="image/*">
@@ -36,77 +63,34 @@
 </div>
 
 <script>
-    // 1. Lógica do OCR
+    // Lógica OCR
     async function processarOCR() {
         const fileInput = document.getElementById("fileInput");
         const divResultado = document.getElementById("resultadoOCR");
-    
-        if (fileInput.files.length === 0) {
-            alert("Por favor, selecione uma imagem.");
-            return;
-        }
-    
+        if (fileInput.files.length === 0) return alert("Selecione uma imagem.");
+        
         divResultado.style.display = "block";
-        divResultado.innerText = "🔍 Lendo documento... isso pode levar alguns segundos.";
-    
-        try {
-            const { data: { text } } = await Tesseract.recognize(
-                fileInput.files[0],
-                'por', 
-                { logger: m => console.log(m) }
-            );
-    
-            divResultado.innerText = "Texto Lido:\n\n" + text;
-    
-            const response = await fetch("/api/salvar-dados", {
-                method: "POST",
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ texto_ocr: text })
-            });
-    
-            if (response.ok) {
-                divResultado.innerText += "\n\n✅ Dados enviados ao servidor com sucesso!";
-            } else {
-                divResultado.innerText += "\n\n❌ Erro ao salvar dados no servidor.";
-            }
-        } catch (error) {
-            console.error(error);
-            divResultado.innerText = "Erro ao processar OCR: " + error.message;
-        }
+        divResultado.innerText = "🔍 Lendo documento...";
+        
+        const { data: { text } } = await Tesseract.recognize(fileInput.files[0], 'por');
+        divResultado.innerText = "Texto Lido:\n\n" + text;
+        
+        await fetch("/api/salvar-dados", {
+            method: "POST",
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ texto_ocr: text })
+        });
     }
 
-    // 2. Lógica das Datas e Relatórios
+    // Datas iniciais
     window.addEventListener("DOMContentLoaded", () => {
         const hoje = new Date();
-        const ano = hoje.getFullYear();
-        const mes = String(hoje.getMonth() + 1).padStart(2, "0");
-        const dia = String(hoje.getDate()).padStart(2, "0");
-
-        document.getElementById("inicio").value = `${ano}-${mes}-01`;
-        document.getElementById("fim").value = `${ano}-${mes}-${dia}`;
+        document.getElementById("inicio").value = new Date(hoje.getFullYear(), hoje.getMonth(), 1).toISOString().split('T')[0];
+        document.getElementById("fim").value = hoje.toISOString().split('T')[0];
     });
 
-    function validarDatas() {
-        const inicio = document.getElementById("inicio").value;
-        const fim = document.getElementById("fim").value;
-        if (!inicio || !fim) {
-            alert("Selecione as datas.");
-            return null;
-        }
-        return { inicio, fim };
-    }
-
-    function gerarPDF() {
-        const datas = validarDatas();
-        if (!datas) return;
-        window.open(`/relatorio/intervalo/pdf?inicio=${datas.inicio}&fim=${datas.fim}`, "_blank");
-    }
-
-    function gerarExcel() {
-        const datas = validarDatas();
-        if (!datas) return;
-        window.open(`/relatorio/intervalo/excel?inicio=${datas.inicio}&fim=${datas.fim}`, "_blank");
-    }
+    function gerarPDF() { window.open(`/relatorio/intervalo/pdf?inicio=${document.getElementById("inicio").value}&fim=${document.getElementById("fim").value}`, "_blank"); }
+    function gerarExcel() { window.open(`/relatorio/intervalo/excel?inicio=${document.getElementById("inicio").value}&fim=${document.getElementById("fim").value}`, "_blank"); }
 </script>
 
 </body>

@@ -169,7 +169,7 @@ def relatorios_page():
 # ==================================
 
 # GET: Retorna as rotas
-@app.route("/api/rotas", methods=["GET"])
+
 @app.route("/api/roteiros", methods=["GET"])
 @app.route("/api/fretes", methods=["GET"])
 def get_rotas():
@@ -180,7 +180,6 @@ def get_rotas():
 
 
 # POST: Salva novas rotas executando o cálculo automático baseado no tipo de veículo por KM
-@app.route("/api/rotas", methods=["POST"])
 @app.route("/api/roteiros", methods=["POST"])
 @app.route("/api/fretes", methods=["POST"])
 def add_rota():
@@ -249,7 +248,6 @@ def add_rota():
 
 
 # PUT: Atualiza as informações recalculando o valor do frete
-@app.route("/api/rotas/<int:id>", methods=["PUT"])
 @app.route("/api/roteiros/<int:id>", methods=["PUT"])
 @app.route("/api/fretes/<int:id>", methods=["PUT"])
 def update_rota(id):
@@ -317,7 +315,7 @@ def update_rota(id):
 
 
 # DELETE
-@app.route("/api/rotas/<int:id>", methods=["DELETE"])
+
 @app.route("/api/roteiros/<int:id>", methods=["DELETE"])
 @app.route("/api/fretes/<int:id>", methods=["DELETE"])
 def delete_rota(id):

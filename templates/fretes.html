@@ -68,32 +68,68 @@
 <script>
     const form = document.getElementById("form");
     const preview = document.getElementById("valor-preview");
-    
+    const lista = document.getElementById("lista");
+
     // Função de cálculo em tempo real
     function calcularPreview() {
-        const taxa = parseFloat(document.getElementById("veiculo").selectedOptions[0]?.dataset.taxa || 0);
+        const select = document.getElementById("veiculo");
+        const taxa = parseFloat(select.selectedOptions[0]?.dataset.taxa || 0);
         const km = parseFloat(document.getElementById("km").value) || 0;
         const pedagio = parseFloat(document.getElementById("pedagio").value) || 0;
         const diaria = parseFloat(document.getElementById("diaria").value) || 0;
         
         const total = (km * taxa) + pedagio + diaria;
         preview.innerText = `R$ ${total.toFixed(2)}`;
+        return total; // Retornamos o total para usar no submit
     }
 
-    // Adiciona evento de escuta para inputs
     ["veiculo", "km", "pedagio", "diaria"].forEach(id => {
         document.getElementById(id).addEventListener("input", calcularPreview);
     });
 
-    // ... (restante da sua lógica de fetch/POST permanece igual)
+    // Função para carregar fretes do servidor
+    async function carregar() {
+        const response = await fetch("/api/fretes");
+        const fretes = await response.json();
+        lista.innerHTML = "";
+        fretes.forEach(f => {
+            lista.innerHTML += `<tr>
+                <td>${f.data}</td><td>${f.rota}</td><td>${f.veiculo}</td>
+                <td>${f.km}</td><td>R$ ${parseFloat(f.total).toFixed(2)}</td>
+            </tr>`;
+        });
+    }
+
+    // Lógica de envio (POST)
     form.addEventListener("submit", async (e) => {
         e.preventDefault();
-        // ... sua lógica de envio
-        alert("Frete registrado com sucesso!");
-        form.reset();
-        calcularPreview();
-        carregar();
+        
+        const dados = {
+            veiculo: document.getElementById("veiculo").value,
+            km: document.getElementById("km").value,
+            pedagio: document.getElementById("pedagio").value,
+            diaria: document.getElementById("diaria").value,
+            rota: document.getElementById("rota").value,
+            data: document.getElementById("data").value,
+            total: calcularPreview()
+        };
+
+        const res = await fetch("/api/fretes", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(dados)
+        });
+
+        if (res.ok) {
+            alert("Frete registrado!");
+            form.reset();
+            calcularPreview();
+            carregar();
+        }
     });
+
+    // Carrega a tabela ao abrir a página
+    carregar();
 </script>
 </body>
 </html>

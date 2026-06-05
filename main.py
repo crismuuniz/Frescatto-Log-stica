@@ -3,16 +3,17 @@ import io
 import re
 import sqlite3
 import pandas as pd
+import cv2
+import numpy as np
 
 from flask import Flask, request, jsonify, render_template, send_file
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
+from PIL import Image, ImageEnhance, ImageOps
 
 from openpyxl.styles import Font, PatternFill
 from openpyxl.utils import get_column_letter
 from PIL import Image
-import pytesseract
-
 import pytesseract
 import os
 
@@ -689,6 +690,35 @@ def ocr_route():
     except Exception as e:
         return jsonify({"erro": str(e)}), 500
 
+def preprocessar_imagem(file_stream):
+    img = Image.open(file_stream).convert('L') # Escala de cinzentos
+    
+    # 1. Aumentar o Contraste
+    enhancer = ImageEnhance.Contrast(img)
+    img = enhancer.enhance(2.0) # Aumenta o contraste em 2x
+    
+    # 2. Aumentar a Nitidez
+    sharpener = ImageEnhance.Sharpness(img)
+    img = sharpener.enhance(2.0)
+    
+    # 3. Autocontrast (ajusta automaticamente os níveis de preto/branco)
+    img = ImageOps.autocontrast(img)
+    
+    return img
+
+def binarizar_imagem(img_pil):
+    # Converte PIL para formato OpenCV
+    img_cv = cv2.cvtColor(np.array(img_pil), cv2.COLOR_RGB2BGR)
+    
+    # Converte para cinza
+    gray = cv2.cvtColor(img_cv, cv2.COLOR_BGR2GRAY)
+    
+    # Thresholding adaptativo (funciona bem com sombras/iluminação desigual)
+    binary = cv2.adaptiveThreshold(
+        gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, 
+        cv2.THRESH_BINARY, 11, 2
+    )
+    return binary
         
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 3000)))

@@ -287,29 +287,7 @@ function gerarExcel() {
     );
 }
 
-async function processarOCR() {
-    let formData = new FormData();
-    formData.append("file", document.getElementById("fileInput").files[0]);
 
-    // 1. Chama a rota de OCR que criamos
-    let response = await fetch("/api/ocr", { method: "POST", body: formData });
-    let data = await response.json();
-
-    if (data.sucesso) {
-        // 2. Com os dados extraídos, chama a rota de salvar canhoto
-        await fetch("/api/canhotos", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                nota_fiscal: data.dados.nota_fiscal,
-                cliente: data.dados.cliente,
-                status: "Entregue"
-            })
-        });
-        alert("Canhoto processado e salvo com sucesso!");
-    
-    }
-}
 </script>
 
 </body>

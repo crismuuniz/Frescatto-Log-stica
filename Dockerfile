@@ -21,5 +21,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Expõe a porta que o Flask usa
 EXPOSE 3000
 
+opencv-python-headless
+
 # Comando para iniciar a aplicação
 CMD ["gunicorn", "main:app", "--bind", "0.0.0.0:3000"]

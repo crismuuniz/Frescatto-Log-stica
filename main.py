@@ -673,66 +673,48 @@ def ocr_route():
     
     file = request.files["file"]
     
-    # 1. Carregar imagem via OpenCV
-    file_bytes = np.frombuffer(file.read(), np.uint8)
-    img = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
-    
-    # 2. Pré-processamento avançado
-    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    
-    # Aumentar contraste (CLAHE) - Melhora muito a leitura em fotos de celular
-    clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8,8))
-    gray = clahe.apply(gray)
-    
-    # Binarização (Preto e Branco puro)
-    _, thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-    
-    # 3. OCR no texto processado
-    texto = pytesseract.image_to_string(thresh, lang='por')
-    
-    # DEBUG: Ver o que foi lido
-    print(f"--- TEXTO LIDO PELO OCR ---\n{texto}\n---------------------------")
-    
-    # Regex (mantive a lógica, mas agora com texto muito mais limpo)
-    nf_match = re.search(r'(?:N[oº]|Nota|NF|Romaneio)[:.\s]+(\d{5,9})', texto, re.IGNORECASE)
-    cliente_match = re.search(r'(?:Cliente|Destinatário)[:.\s]+([A-ZÀ-Ÿ\s]+)', texto, re.IGNORECASE)
-    
-    dados = {
-        "nota_fiscal": nf_match.group(1) if nf_match else "NÃO IDENTIFICADO",
-        "cliente": cliente_match.group(1).strip() if cliente_match else "NÃO IDENTIFICADO"
-    }
-    
-    return jsonify({"sucesso": True, "dados": dados})
+    try:
+        # 1. Converter o ficheiro enviado para algo que o OpenCV entenda
+        file_bytes = np.frombuffer(file.read(), np.uint8)
+        img = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
+        
+        if img is None:
+            return jsonify({"erro": "Imagem inválida"}), 400
 
-def preprocessar_imagem(file_stream):
-    img = Image.open(file_stream).convert('L') # Escala de cinzentos
-    
-    # 1. Aumentar o Contraste
-    enhancer = ImageEnhance.Contrast(img)
-    img = enhancer.enhance(2.0) # Aumenta o contraste em 2x
-    
-    # 2. Aumentar a Nitidez
-    sharpener = ImageEnhance.Sharpness(img)
-    img = sharpener.enhance(2.0)
-    
-    # 3. Autocontrast (ajusta automaticamente os níveis de preto/branco)
-    img = ImageOps.autocontrast(img)
-    
-    return img
+        # 2. Pipeline de Processamento (limpeza da imagem)
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        
+        # Correção de iluminação com CLAHE
+        clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8,8))
+        processed = clahe.apply(gray)
+        
+        # Binarização Otsu para contraste máximo
+        _, binary = cv2.threshold(processed, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+        
+        # 3. Executar o OCR
+        # O psm 6 assume um bloco único de texto (ideal para documentos)
+        config = "--psm 6"
+        texto = pytesseract.image_to_string(binary, lang='por', config=config)
+        
+        print(f"--- LOG DE OCR ---\n{texto}\n-------------------")
+        
+        # 4. Regex (Otimizado)
+        # Nota: captura números de 5 a 9 dígitos após 'Nota', 'NF', 'Nº'
+        nf_match = re.search(r'(?:Nota|NF|N[oº]|Romaneio)[:.\s]+(\d{5,9})', texto, re.IGNORECASE)
+        
+        # Cliente: Captura o que estiver após 'Cliente:' até a quebra de linha
+        cliente_match = re.search(r'(?:Cliente|Destinatário)[:.\s]+([^\n\r]+)', texto, re.IGNORECASE)
+        
+        dados = {
+            "nota_fiscal": nf_match.group(1) if nf_match else "NÃO IDENTIFICADO",
+            "cliente": cliente_match.group(1).strip() if cliente_match else "NÃO IDENTIFICADO"
+        }
+        
+        return jsonify({"sucesso": True, "dados": dados})
 
-def binarizar_imagem(img_pil):
-    # Converte PIL para formato OpenCV
-    img_cv = cv2.cvtColor(np.array(img_pil), cv2.COLOR_RGB2BGR)
-    
-    # Converte para cinza
-    gray = cv2.cvtColor(img_cv, cv2.COLOR_BGR2GRAY)
-    
-    # Thresholding adaptativo (funciona bem com sombras/iluminação desigual)
-    binary = cv2.adaptiveThreshold(
-        gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, 
-        cv2.THRESH_BINARY, 11, 2
-    )
-    return binary
+    except Exception as e:
+        print(f"ERRO CRÍTICO NO OCR: {str(e)}")
+        return jsonify({"erro": str(e)}), 500
         
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 3000)))

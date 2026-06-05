@@ -1,11 +1,10 @@
-# Usando a versão completa em vez da slim para evitar conflitos de bibliotecas
-FROM python:3.9
+FROM python:3.9-slim
 
+# Evitar prompts interativos
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Atualização e instalação em passos separados para identificar onde trava
-RUN apt-get update 
-RUN apt-get install -y --no-install-recommends \
+# Atualização e instalação em um único comando, garantindo o update
+RUN apt-get update && apt-get install -y --no-install-recommends \
     tesseract-ocr \
     libtesseract-dev \
     libleptonica-dev \

@@ -3,6 +3,7 @@ import io
 import re
 import sqlite3
 import pandas as pd
+import reportlab
 
 from flask import Flask, request, jsonify, render_template, send_file
 from reportlab.pdfgen import canvas

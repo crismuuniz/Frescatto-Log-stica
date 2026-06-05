@@ -17,6 +17,7 @@ from PIL import Image
 import pytesseract
 import os
 
+os.environ['TESSDATA_PREFIX'] = '/usr/share/tesseract-ocr/4.00/tessdata'
 # Forçar o caminho do Tesseract no servidor Render
 if os.path.exists('/usr/bin/tesseract'):
     pytesseract.pytesseract.tesseract_cmd = '/usr/bin/tesseract'

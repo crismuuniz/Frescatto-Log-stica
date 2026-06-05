@@ -1,21 +1,17 @@
-FROM python:3.9-slim
+# Usamos a imagem oficial que já contém Tesseract e Python
+FROM jitesoft/tesseract-ocr:latest
+
+# Instalar Python (já que a imagem base é só Tesseract)
+RUN apt-get update && apt-get install -y python3 python3-pip && \
+    rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-# Instalar dependências de sistema (opcional, mas recomendado para OCR)
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    tesseract-ocr \
-    libgl1-mesa-glx \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
-
-# Copiar requirements e instalar antes de copiar o resto do código
-# Isso garante que o pip rode com sucesso
+# Instalar dependências Python
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip3 install --no-cache-dir -r requirements.txt
 
-# Copiar o resto da aplicação
 COPY . .
 
-# Comando de inicialização
+# Usar gunicorn para rodar
 CMD ["gunicorn", "main:app", "--bind", "0.0.0.0:3000"]

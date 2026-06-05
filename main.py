@@ -716,6 +716,13 @@ def ocr_route():
     except Exception as e:
         print(f"ERRO CRÍTICO NO OCR: {str(e)}")
         return jsonify({"erro": str(e)}), 500
+
+
+@app.route("/api/salvar-dados", methods=["POST"])
+def salvar_dados():
+    texto = request.json.get("texto_ocr", "")
+    # Aplique seu regex aqui no 'texto'
+    return jsonify({"status": "recebido"})
         
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 3000)))

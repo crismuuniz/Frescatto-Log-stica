@@ -235,6 +235,48 @@
 </div>
 
 <script>
+    async function processarOCR() {
+        const fileInput = document.getElementById("fileInput");
+        const divResultado = document.getElementById("resultadoOCR");
+    
+        if (fileInput.files.length === 0) {
+            alert("Por favor, selecione uma imagem.");
+            return;
+        }
+    
+        divResultado.style.display = "block";
+        divResultado.innerText = "🔍 Lendo documento... isso pode levar alguns segundos.";
+    
+        try {
+            // OCR feito no navegador do usuário
+            const { data: { text } } = await Tesseract.recognize(
+                fileInput.files[0],
+                'por', 
+                { logger: m => console.log(m) }
+            );
+    
+            divResultado.innerText = "Texto Lido:\n\n" + text;
+    
+            // Envia apenas o texto extraído para o seu servidor
+            const response = await fetch("/api/salvar-dados", {
+                method: "POST",
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ texto_ocr: text })
+            });
+    
+            if (response.ok) {
+                divResultado.innerText += "\n\n✅ Dados enviados ao servidor com sucesso!";
+            } else {
+                divResultado.innerText += "\n\n❌ Erro ao salvar dados no servidor.";
+            }
+    
+        } catch (error) {
+            console.error(error);
+            divResultado.innerText = "Erro ao processar OCR: " + error.message;
+        }
+    }
+
+<script>
 window.addEventListener("DOMContentLoaded", () => {
 
     const hoje = new Date();

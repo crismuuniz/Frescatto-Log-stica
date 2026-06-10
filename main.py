@@ -381,7 +381,7 @@ def update_rota(id):
     dados = request.json
     conn = get_db()
 
-   veiculo = dados.get("veiculo") or dados.get("tipo_veiculo") or "Padrão"
+veiculo = dados.get("veiculo") or dados.get("tipo_veiculo") or "Padrão"
 
 rota = (
     dados.get("descricao_rota")
@@ -401,7 +401,7 @@ valor_final_frete = calcular_frete_por_veiculo(
     diaria
 )
 
-    conn.execute("""
+conn.execute("""
         UPDATE rotas SET
             carga = ?,
             data_carga = ?,
@@ -440,10 +440,10 @@ valor_final_frete = calcular_frete_por_veiculo(
         id
     ))
 
-    conn.commit()
-    conn.close()
+conn.commit()
+conn.close()
 
-    return jsonify({
+return jsonify({
         "status": "ok",
         "valor_calculado": valor_final_frete
     })

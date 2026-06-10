@@ -31,25 +31,146 @@ app = Flask(__name__)
 # TABELA DE TARIFAS E REGRA DE NEGÓCIO (PAGAMENTO POR KM)
 # ==================================
 
-def calcular_frete_por_veiculo(veiculo, km, pedagio, diaria):
-    tarifas = {
-        "fiorino": 2.20,
-        "vlc": 2.80,
-        "hr": 2.80,
-        "3/4": 3.40,
-        "toco": 4.10,
-        "truck": 5.00,
-        "carreta": 6.50
+def calcular_frete_por_veiculo(veiculo, rota, km=0, pedagio=0, diaria=0):
+    veiculo = str(veiculo).strip().lower()
+    rota = str(rota).strip().lower()
+
+    tabela_fretes = {
+        "fiorino": {
+            "caravelas": 860.71,
+            "alcobaça": 860.71,
+            "prado": 860.71,
+            "teixeira": 860.71,
+            "cumuruxatiba": 860.71,
+            "corumbau": 1114.67,
+            "itamaraju": 1114.67,
+            "mucuri": 1051.91,
+            "nova viçosa": 1051.91,
+            "nanuque": 1348.69,
+            "montanha": 1348.69,
+            "porto seguro": 1348.69,
+            "cabrália": 1348.69,
+            "cabralia": 1348.69,
+            "arraial": 1348.69,
+            "trancoso": 1348.69,
+            "caraíva": 1348.69,
+            "caraiva": 1348.69,
+            "linhares": 1348.69,
+            "são mateus": 1348.69,
+            "sao mateus": 1348.69,
+            "ilhéus": 3000.00,
+            "ilheus": 3000.00,
+            "valença": 4000.00,
+            "valenca": 4000.00,
+            "morro de são paulo": 4000.00,
+            "morro de sao paulo": 4000.00,
+            "itacaré": 4000.00,
+            "itacare": 4000.00,
+            "salvador": 4000.00
+        },
+
+        "bongo": {
+            "caravelas": 1121.04,
+            "alcobaça": 1121.04,
+            "prado": 1121.04,
+            "teixeira": 1121.04,
+            "cumuruxatiba": 1121.04,
+            "corumbau": 1369.47,
+            "itamaraju": 1369.47,
+            "mucuri": 1275.75,
+            "nova viçosa": 1275.75,
+            "nanuque": 1651.24,
+            "montanha": 1651.24,
+            "porto seguro": 1651.24,
+            "cabrália": 1651.24,
+            "cabralia": 1651.24,
+            "arraial": 1651.24,
+            "trancoso": 1651.24,
+            "caraíva": 1651.24,
+            "caraiva": 1651.24,
+            "linhares": 1651.24,
+            "são mateus": 1651.24,
+            "sao mateus": 1651.24,
+            "ilhéus": 5500.00,
+            "ilheus": 5500.00,
+            "valença": 7000.00,
+            "valenca": 7000.00,
+            "morro de são paulo": 7000.00,
+            "morro de sao paulo": 7000.00,
+            "itacaré": 7000.00,
+            "itacare": 7000.00,
+            "salvador": 7000.00
+        },
+
+        "hr": {
+            "caravelas": 1121.04,
+            "alcobaça": 1121.04,
+            "prado": 1121.04,
+            "teixeira": 1121.04,
+            "cumuruxatiba": 1121.04,
+            "corumbau": 1369.47,
+            "itamaraju": 1369.47,
+            "mucuri": 1275.75,
+            "nova viçosa": 1275.75,
+            "nanuque": 1651.24,
+            "montanha": 1651.24,
+            "porto seguro": 1651.24,
+            "cabrália": 1651.24,
+            "cabralia": 1651.24,
+            "arraial": 1651.24,
+            "trancoso": 1651.24,
+            "caraíva": 1651.24,
+            "caraiva": 1651.24,
+            "linhares": 1651.24,
+            "são mateus": 1651.24,
+            "sao mateus": 1651.24,
+            "ilhéus": 5500.00,
+            "ilheus": 5500.00,
+            "valença": 7000.00,
+            "valenca": 7000.00,
+            "morro de são paulo": 7000.00,
+            "morro de sao paulo": 7000.00,
+            "itacaré": 7000.00,
+            "itacare": 7000.00,
+            "salvador": 7000.00
+        },
+
+        "3/4": {
+            "caravelas": 1296.37,
+            "alcobaça": 1296.37,
+            "prado": 1296.37,
+            "teixeira": 1296.37,
+            "cumuruxatiba": 1296.37,
+            "corumbau": 1440.89,
+            "itamaraju": 1440.89,
+            "mucuri": 1474.32,
+            "nova viçosa": 1474.32,
+            "nanuque": 2119.91,
+            "montanha": 2119.91,
+            "porto seguro": 2119.91,
+            "cabrália": 2119.91,
+            "cabralia": 2119.91,
+            "arraial": 2119.91,
+            "trancoso": 2119.91,
+            "caraíva": 2119.91,
+            "caraiva": 2119.91,
+            "linhares": 2119.91,
+            "são mateus": 2119.91,
+            "sao mateus": 2119.91,
+            "salvador": 8800.00
+        }
     }
+
+    valor_base = 0
+
+    if veiculo in tabela_fretes:
+        for cidade, valor in tabela_fretes[veiculo].items():
+            if cidade in rota:
+                valor_base = valor
+                break
+
+    return round(valor_base + float(pedagio) + float(diaria), 2)
     
-    # Indentação corrigida: alinhada com o bloco da função
-    veiculo_limpo = str(veiculo).strip().lower()
-    
-    # Procura a tarifa padrão. Se não encontrar o modelo exato, assume um valor médio de R$ 3.00/KM
-    taxa_km = tarifas.get(veiculo_limpo, 3.00)
-    
-    # Executa o cálculo da regra de negócio
-    return (km * taxa_km) + pedagio + diaria
 
 
 # ==================================
@@ -187,19 +308,26 @@ def add_rota():
     conn = get_db()
 
     veiculo = dados.get("veiculo") or dados.get("tipo_veiculo") or "Padrão"
-    km = float(dados.get("km") or 0)
-    pedagio = float(dados.get("pedagio") or 0)
-    diaria = float(dados.get("diaria") or 0)
 
-    # Executa a regra da opção 2
-    valor_final_frete = calcular_frete_por_veiculo(
-        veiculo,
-        km,
-        pedagio,
-        diaria
-    )
+rota = (
+    dados.get("descricao_rota")
+    or dados.get("rota")
+    or ""
+)
 
-    conn.execute("""
+km = float(dados.get("km") or 0)
+pedagio = float(dados.get("pedagio") or 0)
+diaria = float(dados.get("diaria") or 0)
+
+valor_final_frete = calcular_frete_por_veiculo(
+    veiculo,
+    rota,
+    km,
+    pedagio,
+    diaria
+)
+
+conn.execute("""
         INSERT INTO rotas (
             carga,
             data_carga,
@@ -238,10 +366,9 @@ def add_rota():
         valor_final_frete
     ))
 
-    conn.commit()
-    conn.close()
-
-    return jsonify({
+conn.commit()
+conn.close()
+return jsonify({
         "status": "ok",
         "valor_calculado": valor_final_frete
     }), 201
@@ -254,17 +381,25 @@ def update_rota(id):
     dados = request.json
     conn = get_db()
 
-    veiculo = dados.get("veiculo") or dados.get("tipo_veiculo") or "Padrão"
-    km = float(dados.get("km") or 0)
-    pedagio = float(dados.get("pedagio") or 0)
-    diaria = float(dados.get("diaria") or 0)
+   veiculo = dados.get("veiculo") or dados.get("tipo_veiculo") or "Padrão"
 
-    valor_final_frete = calcular_frete_por_veiculo(
-        veiculo,
-        km,
-        pedagio,
-        diaria
-    )
+rota = (
+    dados.get("descricao_rota")
+    or dados.get("rota")
+    or ""
+)
+
+km = float(dados.get("km") or 0)
+pedagio = float(dados.get("pedagio") or 0)
+diaria = float(dados.get("diaria") or 0)
+
+valor_final_frete = calcular_frete_por_veiculo(
+    veiculo,
+    rota,
+    km,
+    pedagio,
+    diaria
+)
 
     conn.execute("""
         UPDATE rotas SET

@@ -3,133 +3,105 @@
 <head>
     <meta charset="UTF-8">
     <title>Movimentação de Fretes - Frescatto</title>
+    <script src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'></script>
     <style>
-        :root { --primary: #c00000; --success: #2ed573; --dark: #2f3542; }
-        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f1f2f6; color: var(--dark); padding: 20px; margin: 0; }
-        .container { max-width: 1100px; margin: auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-        
-        /* Destaque para o cálculo */
-        .preview-box { background: #f8f9fa; padding: 15px; border-radius: 5px; margin-bottom: 20px; text-align: center; border: 2px dashed var(--success); }
-        .preview-value { font-size: 1.5rem; font-weight: bold; color: var(--primary); }
-
+        :root { --primary: #c00000; --dark: #2f3542; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f1f2f6; padding: 20px; }
+        .container { max-width: 1200px; margin: auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
-        input, select { width: 100%; padding: 12px; border: 1px solid #ced6e0; border-radius: 5px; font-size: 14px; }
-        
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th { background: var(--dark); color: white; padding: 12px; text-align: left; }
-        td { padding: 12px; border-bottom: 1px solid #e4e7eb; }
-        tr:hover { background-color: #fcfcfc; }
+        input, select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 14px; }
+        th { background: var(--dark); color: white; padding: 10px; }
+        td { padding: 10px; border-bottom: 1px solid #eee; text-align: center; }
+        .btn-acao { background: var(--primary); color: white; padding: 12px 20px; border: none; border-radius: 5px; cursor: pointer; }
+        #resultadoOCR { margin: 10px 0; padding: 10px; background: #eee; display: none; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>🚚 Lançamento de Fretes</h1>
+    <h1>🚚 Lançamento de Fretes - Frescatto</h1>
 
-    <div class="preview-box">
-        <div>Valor Estimado do Frete</div>
-        <div id="valor-preview" class="preview-value">R$ 0,00</div>
+    <div style="border: 1px dashed #ccc; padding: 15px; margin-bottom: 20px;">
+        <h3>📷 Leitura Rápida de Canhoto</h3>
+        <input type="file" id="fileInput" accept="image/*">
+        <button class="btn-acao" onclick="processarOCR()">Processar OCR</button>
+        <div id="resultadoOCR"></div>
     </div>
 
     <form id="form">
         <div class="form-grid">
-            <div class="form-group">
-                <label>VEÍCULO</label>
-                <select id="veiculo" required>
-                    <option value="">Selecione...</option>
-                    <option value="fiorino" data-taxa="2.20">Fiorino (R$ 2,20/KM)</option>
-                    <option value="vlc" data-taxa="2.80">VLC (R$ 2,80/KM)</option>
-                    <option value="hr" data-taxa="2.80">HR (R$ 2,80/KM)</option>
-                    <option value="3/4" data-taxa="3.40">3/4 (R$ 3,40/KM)</option>
-                    <option value="toco" data-taxa="4.10">Toco (R$ 4,10/KM)</option>
-                    <option value="truck" data-taxa="5.00">Truck (R$ 5,00/KM)</option>
-                    <option value="carreta" data-taxa="6.50">Carreta (R$ 6,50/KM)</option>
-                </select>
-            </div>
-            <div class="form-group"><label>KM RODADOS</label><input type="number" id="km" step="0.1" placeholder="0.0" required></div>
-            <div class="form-group"><label>PEDÁGIO (R$)</label><input type="number" id="pedagio" step="0.01" value="0.00"></div>
-            <div class="form-group"><label>DIÁRIA (R$)</label><input type="number" id="diaria" step="0.01" value="0.00"></div>
-            <div class="form-group"><label>ROTA</label><input id="rota" required></div>
-            <div class="form-group"><label>DATA</label><input type="date" id="data" required></div>
+            <input type="date" id="data" required>
+            <input id="motorista" placeholder="Motorista" required>
+            <input id="rota" placeholder="Rota" required>
+            <input id="placa" placeholder="Placa" required>
+            <input id="romaneio" placeholder="Romaneio" required>
+            <input type="number" id="entregas" placeholder="Qtd Entregas">
+            <input id="peso" placeholder="Peso (ex: 320KG)">
+            <select id="veiculo" required>
+                <option value="">Selecione Veículo...</option>
+                <option value="fiorino" data-taxa="2.20">Fiorino</option>
+                <option value="vlc" data-taxa="2.80">VLC</option>
+                <option value="toco" data-taxa="4.10">Toco</option>
+            </select>
+            <input type="number" id="km" placeholder="KM Rodados" step="0.1">
+            <input type="number" id="valor_carga" placeholder="Valor Carga R$">
         </div>
-        <button type="submit">Salvar e Registrar Frete</button>
+        <button type="submit" class="btn-acao" style="background:green">Salvar Lançamento</button>
     </form>
 
-    <div class="table-responsive">
-        <table>
-            <thead>
-                <tr><th>Data</th><th>Rota</th><th>Veículo</th><th>KM</th><th class="text-right">Total</th></tr>
-            </thead>
-            <tbody id="lista"></tbody>
-        </table>
-    </div>
+    <table>
+        <thead>
+            <tr>
+                <th>Data</th><th>Motorista</th><th>Rota</th><th>Placa</th>
+                <th>Romaneio</th><th>Entregas</th><th>Peso</th><th>Veículo</th><th>Frete</th>
+            </tr>
+        </thead>
+        <tbody id="lista"></tbody>
+    </table>
 </div>
 
 <script>
-    const form = document.getElementById("form");
-    const preview = document.getElementById("valor-preview");
-    const lista = document.getElementById("lista");
-
-    // Função de cálculo em tempo real
-    function calcularPreview() {
-        const select = document.getElementById("veiculo");
-        const taxa = parseFloat(select.selectedOptions[0]?.dataset.taxa || 0);
-        const km = parseFloat(document.getElementById("km").value) || 0;
-        const pedagio = parseFloat(document.getElementById("pedagio").value) || 0;
-        const diaria = parseFloat(document.getElementById("diaria").value) || 0;
+    // OCR no Front
+    async function processarOCR() {
+        const file = document.getElementById("fileInput").files[0];
+        const resDiv = document.getElementById("resultadoOCR");
+        resDiv.style.display = "block";
+        resDiv.innerText = "Lendo...";
         
-        const total = (km * taxa) + pedagio + diaria;
-        preview.innerText = `R$ ${total.toFixed(2)}`;
-        return total; // Retornamos o total para usar no submit
+        const { data: { text } } = await Tesseract.recognize(file, 'por');
+        resDiv.innerText = "Extraído: " + text.substring(0, 100) + "...";
+        // Envio para o backend conforme definido anteriormente
+        await fetch("/api/salvar-dados", { method: "POST", headers: {'Content-Type': 'application/json'}, body: JSON.stringify({texto_ocr: text}) });
     }
 
-    ["veiculo", "km", "pedagio", "diaria"].forEach(id => {
-        document.getElementById(id).addEventListener("input", calcularPreview);
-    });
-
-    // Função para carregar fretes do servidor
-    async function carregar() {
-        const response = await fetch("/api/fretes");
-        const fretes = await response.json();
-        lista.innerHTML = "";
-        fretes.forEach(f => {
-            lista.innerHTML += `<tr>
-                <td>${f.data}</td><td>${f.rota}</td><td>${f.veiculo}</td>
-                <td>${f.km}</td><td>R$ ${parseFloat(f.total).toFixed(2)}</td>
-            </tr>`;
-        });
-    }
-
-    // Lógica de envio (POST)
-    form.addEventListener("submit", async (e) => {
+    // Envio do formulário
+    document.getElementById("form").addEventListener("submit", async (e) => {
         e.preventDefault();
-        
         const dados = {
+            data: document.getElementById("data").value,
+            motorista: document.getElementById("motorista").value,
+            rota: document.getElementById("rota").value,
+            placa: document.getElementById("placa").value,
+            romaneio: document.getElementById("romaneio").value,
+            entregas: document.getElementById("entregas").value,
+            peso: document.getElementById("peso").value,
             veiculo: document.getElementById("veiculo").value,
             km: document.getElementById("km").value,
-            pedagio: document.getElementById("pedagio").value,
-            diaria: document.getElementById("diaria").value,
-            rota: document.getElementById("rota").value,
-            data: document.getElementById("data").value,
-            total: calcularPreview()
+            valor_carga: document.getElementById("valor_carga").value
         };
 
-        const res = await fetch("/api/fretes", {
+        const res = await fetch("/api/rotas", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(dados)
         });
 
         if (res.ok) {
-            alert("Frete registrado!");
-            form.reset();
-            calcularPreview();
-            carregar();
+            alert("Lançamento salvo!");
+            location.reload();
         }
     });
-
-    // Carrega a tabela ao abrir a página
-    carregar();
 </script>
 </body>
 </html>

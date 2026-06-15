@@ -4,6 +4,7 @@ import re
 import sqlite3
 import pandas as pd
 import reportlab
+import pytesseract
 
 from flask import Flask, request, jsonify, render_template, send_file
 from reportlab.pdfgen import canvas
@@ -300,7 +301,6 @@ def get_rotas():
     return jsonify([dict(r) for r in rows])
 
 
-# POST: Salva novas rotas executando o cálculo automático baseado no tipo de veículo por KM
 @app.route("/api/roteiros", methods=["POST"])
 @app.route("/api/fretes", methods=["POST"])
 def add_rota():
@@ -308,70 +308,24 @@ def add_rota():
     conn = get_db()
 
     veiculo = dados.get("veiculo") or dados.get("tipo_veiculo") or "Padrão"
+    
+    # Agora está indentado corretamente dentro da função
+    rota = (dados.get("descricao_rota") or dados.get("rota") or "")
+    km = float(dados.get("km") or 0)
+    pedagio = float(dados.get("pedagio") or 0)
+    diaria = float(dados.get("diaria") or 0)
 
-rota = (
-    dados.get("descricao_rota")
-    or dados.get("rota")
-    or ""
-)
+    valor_final_frete = calcular_frete_por_veiculo(veiculo, rota, km, pedagio, diaria)
 
-km = float(dados.get("km") or 0)
-pedagio = float(dados.get("pedagio") or 0)
-diaria = float(dados.get("diaria") or 0)
-
-valor_final_frete = calcular_frete_por_veiculo(
-    veiculo,
-    rota,
-    km,
-    pedagio,
-    diaria
-)
-
-conn.execute("""
-        INSERT INTO rotas (
-            carga,
-            data_carga,
-            motorista,
-            placa,
-            veiculo,
-            codigo_roteiro,
-            descricao_rota,
-            valor_coleta,
-            quantidade_entregas,
-            peso,
-            volume,
-            valor_carga,
-            km,
-            pedagio,
-            diaria,
-            valor_frete
-        )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    """, (
-        dados.get("carga") or dados.get("rota"),
-        dados.get("data_carga") or dados.get("data"),
-        dados.get("motorista"),
-        dados.get("placa"),
-        veiculo,
-        dados.get("codigo_roteiro") or dados.get("romaneio"),
-        dados.get("descricao_rota"),
-        dados.get("valor_coleta", 0),
-        dados.get("quantidade_entregas", 0),
-        dados.get("peso", 0),
-        dados.get("volume", 0),
-        dados.get("valor_carga", 0),
-        km,
-        pedagio,
-        diaria,
-        valor_final_frete
-    ))
-
-conn.commit()
-conn.close()
-return jsonify({
-        "status": "ok",
-        "valor_calculado": valor_final_frete
-    }), 201
+    # O cursor.execute deve estar aqui dentro, também indentado
+    conn.execute("""
+        INSERT INTO rotas (...) VALUES (?, ?, ?, ...)
+    """, (...))
+    
+    conn.commit()
+    conn.close()
+    return jsonify({"status": "ok", "valor_calculado": valor_final_frete}), 201
+    
 
 
 # PUT: Atualiza as informações recalculando o valor do frete
@@ -387,7 +341,7 @@ rota = (
     dados.get("descricao_rota")
     or dados.get("rota")
     or ""
-)
+) 
 
 km = float(dados.get("km") or 0)
 pedagio = float(dados.get("pedagio") or 0)
@@ -795,6 +749,27 @@ def relatorio_pdf():
     return send_file(
         buffer,
         download_name=f"relatorio_{inicio}_{fim}.pdf",
+        as_attachment=True
+    )
+
+@app.route("/api/exportar-excel", methods=["GET"])
+def exportar_excel():
+    conn = get_db()
+    # Busca todos os dados da tabela rotas
+    df = pd.read_sql_query("SELECT * FROM rotas", conn)
+    conn.close()
+
+    # Cria um buffer de memória para o arquivo Excel
+    output = io.BytesIO()
+    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+        df.to_excel(writer, index=False, sheet_name='Fretes')
+    
+    output.seek(0)
+    
+    return send_file(
+        output,
+        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        download_name='relatorio_fretes.xlsx',
         as_attachment=True
     )
 

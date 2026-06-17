@@ -96,7 +96,7 @@
         const inicio = document.getElementById("inicio").value;
         const fim = document.getElementById("fim").value;
         // Agora chamamos a rota passando os parâmetros de data
-        <a href="/api/exportar-excel" class="btn-acao">Baixar Relatório Excel</a> 
+        window.location.href = `/api/exportar-excel?inicio=${inicio}&fim=${fim}`;
     }
 </script>
 

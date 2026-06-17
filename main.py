@@ -702,7 +702,7 @@ def relatorio_pdf():
         as_attachment=True
     )
 
-@app.route("/api/exportar_excel")
+@app.route("/api/exportar-excel")
 def exportar_excel():
     try:
         inicio = request.args.get("inicio") or "2000-01-01"

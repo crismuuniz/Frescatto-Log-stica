@@ -394,10 +394,7 @@ conn.execute("""
 conn.commit()
 conn.close()
 
-return jsonify({
-        "status": "ok",
-        "valor_calculado": valor_final_frete
-})
+return jsonify({"status": "ok","valor_calculado": valor_final_frete})
     
 
 # ==================================

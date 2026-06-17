@@ -92,7 +92,9 @@
     });
 
     function gerarPDF() { window.open(`/relatorio/intervalo/pdf?inicio=${document.getElementById("inicio").value}&fim=${document.getElementById("fim").value}`, "_blank"); }
-    function gerarExcel() { window.open(`/relatorio/intervalo/excel?inicio=${document.getElementById("inicio").value}&fim=${document.getElementById("fim").value}`, "_blank"); }
+    function gerarExcel() { 
+    window.open(`/api/exportar-excel`, "_blank"); 
+}
 </script>
 
 </body>

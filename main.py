@@ -13,8 +13,6 @@ from PIL import Image, ImageEnhance, ImageOps
 
 from openpyxl.styles import Font, PatternFill
 from openpyxl.utils import get_column_letter
-from PIL import Image
-import os
 
 os.environ['TESSDATA_PREFIX'] = '/usr/share/tesseract-ocr/4.00/tessdata'
 # Forçar o caminho do Tesseract no servidor Render
@@ -317,10 +315,17 @@ def add_rota():
 
     valor_final_frete = calcular_frete_por_veiculo(veiculo, rota, km, pedagio, diaria)
 
-    # O cursor.execute deve estar aqui dentro, também indentado
     conn.execute("""
-        INSERT INTO rotas (...) VALUES (?, ?, ?, ...)
-    """, (...))
+        INSERT INTO rotas (carga, data_carga, motorista, placa, veiculo, codigo_roteiro, 
+                           descricao_rota, valor_coleta, quantidade_entregas, peso, volume, 
+                           valor_carga, km, pedagio, diaria, valor_frete)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """, (dados.get("carga") or dados.get("rota"), dados.get("data_carga") or dados.get("data"), 
+          dados.get("motorista"), dados.get("placa"), veiculo, 
+          dados.get("codigo_roteiro") or dados.get("romaneio"), dados.get("descricao_rota"),
+          dados.get("valor_coleta", 0), dados.get("quantidade_entregas", 0), 
+          dados.get("peso", 0), dados.get("volume", 0), dados.get("valor_carga", 0), 
+          km, pedagio, diaria, valor_final_frete))
     
     conn.commit()
     conn.close()

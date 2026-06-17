@@ -704,61 +704,68 @@ def relatorio_pdf():
 
 @app.route("/api/exportar-excel")
 def exportar_excel():
-    inicio = request.args.get("inicio") or "2000-01-01"
-    fim = request.args.get("fim") or "2100-12-31"
+    try:
+        inicio = request.args.get("inicio") or "2000-01-01"
+        fim = request.args.get("fim") or "2100-12-31"
 
-    conn = get_db()
-    query = "SELECT * FROM rotas WHERE data_carga BETWEEN ? AND ?"
-    df = pd.read_sql_query(query, conn, params=(inicio, fim))
-    conn.close()
+        conn = get_db()
+        query = "SELECT * FROM rotas WHERE data_carga BETWEEN ? AND ?"
+        df = pd.read_sql_query(query, conn, params=(inicio, fim))
+        conn.close()
 
-    if df.empty:
-        return "Nenhum dado encontrado.", 404
+        if df.empty:
+            return "Nenhum dado encontrado.", 404
 
-    output = io.BytesIO()
-    with pd.ExcelWriter(output, engine='openpyxl') as writer:
-        # Exportar dados começando na linha 3 para deixar espaço para o título
-        df.to_excel(writer, index=False, sheet_name='Fretes', startrow=2)
-        
-        workbook = writer.book
-        worksheet = writer.sheets['Fretes']
-        
-        # 1. Título Corporativo
-        worksheet.merge_cells('A1:P1') # Ajuste a letra conforme o número de colunas
-        titulo = worksheet['A1']
-        titulo.value = "TABELA DE FRETES MOTORISTAS TERCEIRIZADOS"
-        titulo.font = Font(size=16, bold=True, color="FFFFFF")
-        titulo.fill = PatternFill(start_color="C00000", end_color="C00000", fill_type="solid")
-        titulo.alignment = Alignment(horizontal="center")
-
-        # 2. Formatação dos Cabeçalhos (Linha 3)
-        header_font = Font(bold=True, color="FFFFFF")
-        header_fill = PatternFill(start_color="2F3542", end_color="2F3542", fill_type="solid")
-        for cell in worksheet[3]:
-            cell.font = header_font
-            cell.fill = header_fill
-
-        # 3. Formatação de Moeda e Ajuste de Largura
-        for idx, col in enumerate(df.columns):
-            col_letter = get_column_letter(idx + 1)
-            # Aplicar formato de moeda para colunas que contenham "valor" ou "frete"
-            if 'valor' in col.lower() or 'frete' in col.lower() or 'diaria' in col.lower():
-                for cell in worksheet[f'{col_letter}4:{col_letter}{len(df)+3}']:
-                    cell.number_format = 'R$ #,##0.00'
+        output = io.BytesIO()
+        with pd.ExcelWriter(output, engine='openpyxl') as writer:
+            # 1. Exportar dados começando na linha 3
+            df.to_excel(writer, index=False, sheet_name='Fretes', startrow=2)
             
-            # Ajuste de largura
-            max_len = max(df[col].astype(str).map(len).max(), len(col)) + 4
-            worksheet.column_dimensions[col_letter].width = max_len
+            workbook = writer.book
+            worksheet = writer.sheets['Fretes']
+            
+            # 2. Título Dinâmico (Mescla baseado na quantidade de colunas)
+            num_cols = len(df.columns)
+            ultima_coluna_letra = get_column_letter(num_cols)
+            intervalo_titulo = f'A1:{ultima_coluna_letra}1'
+            
+            worksheet.merge_cells(intervalo_titulo)
+            titulo = worksheet['A1']
+            titulo.value = "TABELA DE FRETES MOTORISTAS TERCEIRIZADOS"
+            titulo.font = Font(size=16, bold=True, color="FFFFFF")
+            titulo.fill = PatternFill(start_color="C00000", end_color="C00000", fill_type="solid")
+            titulo.alignment = Alignment(horizontal="center")
 
-    output.seek(0)
-    return send_file(
-        output,
-        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        download_name='Relatorio_Financeiro_Frescatto.xlsx',
-        as_attachment=True
-    )
+            # 3. Formatação dos Cabeçalhos (Linha 3)
+            header_font = Font(bold=True, color="FFFFFF")
+            header_fill = PatternFill(start_color="2F3542", end_color="2F3542", fill_type="solid")
+            for cell in worksheet[3]:
+                cell.font = header_font
+                cell.fill = header_fill
 
- 
+            # 4. Formatação de Moeda e Ajuste de Largura
+            for idx, col in enumerate(df.columns):
+                col_letter = get_column_letter(idx + 1)
+                
+                # Formato de moeda para colunas financeiras
+                if any(termo in col.lower() for termo in ['valor', 'frete', 'diaria', 'pedagio']):
+                    for cell in worksheet[f'{col_letter}4:{col_letter}{len(df)+3}']:
+                        cell.number_format = 'R$ #,##0.00'
+                
+                # Ajuste de largura automático
+                max_len = max(df[col].astype(str).map(len).max(), len(col)) + 4
+                worksheet.column_dimensions[col_letter].width = max_len
+
+        output.seek(0)
+        return send_file(
+            output,
+            mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            download_name='Relatorio_Financeiro_Frescatto.xlsx',
+            as_attachment=True
+        )
+    except Exception as e:
+        # Se der erro, o navegador mostrará exatamente o que aconteceu
+        return f"Erro ao gerar o arquivo: {str(e)}", 500
 
 # Rota simples para receber o texto extraído do OCR
 @app.route("/api/salvar-dados", methods=["POST"])

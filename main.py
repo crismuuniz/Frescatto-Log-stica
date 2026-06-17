@@ -708,22 +708,39 @@ def exportar_excel():
     fim = request.args.get("fim") or "2100-12-31"
 
     conn = get_db()
-    # O filtro de data foi adicionado aqui para coincidir com o PDF
     query = "SELECT * FROM rotas WHERE data_carga BETWEEN ? AND ?"
     df = pd.read_sql_query(query, conn, params=(inicio, fim))
     conn.close()
 
+    if df.empty:
+        return "Nenhum dado encontrado para o período.", 404
+
     output = io.BytesIO()
-    # O uso do 'with' garante que o arquivo seja fechado corretamente na memória
     with pd.ExcelWriter(output, engine='openpyxl') as writer:
         df.to_excel(writer, index=False, sheet_name='Fretes')
-    
+        
+        # Acessando a planilha para formatar
+        workbook = writer.book
+        worksheet = writer.sheets['Fretes']
+        
+        # 1. Ajustar largura das colunas automaticamente
+        for idx, col in enumerate(df.columns):
+            max_len = max(df[col].astype(str).map(len).max(), len(col)) + 2
+            worksheet.column_dimensions[get_column_letter(idx + 1)].width = max_len
+        
+        # 2. Formatar o cabeçalho (Negrito e Fundo Cinza)
+        header_font = Font(bold=True, color="FFFFFF")
+        header_fill = PatternFill(start_color="2F3542", end_color="2F3542", fill_type="solid")
+        
+        for cell in worksheet[1]:
+            cell.font = header_font
+            cell.fill = header_fill
+
     output.seek(0)
-    
     return send_file(
         output,
         mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        download_name='relatorio_fretes.xlsx',
+        download_name='Relatorio_Fretes_Frescatto.xlsx',
         as_attachment=True
     )
 

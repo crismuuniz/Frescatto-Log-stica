@@ -702,7 +702,7 @@ def relatorio_pdf():
         as_attachment=True
     )
 
-@app.route("/api/exportar-excel")
+@app.route("/api/exportar_excel")
 def exportar_excel():
     try:
         inicio = request.args.get("inicio") or "2000-01-01"
@@ -757,7 +757,7 @@ def exportar_excel():
                 for row in worksheet.iter_rows(min_row=4, min_col=idx+1, max_col=idx+1, max_row=len(df)+3):
                     for cell in row:
                         cell.number_format = 'R$ #,##0.00'
-                        
+
         output.seek(0)
         return send_file(
             output,

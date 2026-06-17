@@ -397,7 +397,7 @@ conn.close()
 return jsonify({
         "status": "ok",
         "valor_calculado": valor_final_frete
-    })
+})
     
 
 # ==================================

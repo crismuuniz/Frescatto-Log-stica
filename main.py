@@ -744,18 +744,20 @@ def exportar_excel():
                 cell.fill = header_fill
 
             # 4. Formatação de Moeda e Ajuste de Largura
-            for idx, col in enumerate(df.columns):
-                col_letter = get_column_letter(idx + 1)
-                
-                # Formato de moeda para colunas financeiras
-                if any(termo in col.lower() for termo in ['valor', 'frete', 'diaria', 'pedagio']):
-                    for cell in worksheet[f'{col_letter}4:{col_letter}{len(df)+3}']:
-                        cell.number_format = 'R$ #,##0.00'
-                
-                # Ajuste de largura automático
-                max_len = max(df[col].astype(str).map(len).max(), len(col)) + 4
-                worksheet.column_dimensions[col_letter].width = max_len
+        for idx, col in enumerate(df.columns):
+            col_letter = get_column_letter(idx + 1)
+            
+            # Ajuste de largura automático
+            max_len = max(df[col].astype(str).map(len).max(), len(col)) + 4
+            worksheet.column_dimensions[col_letter].width = max_len
 
+            # Formato de moeda para colunas financeiras
+            if any(termo in col.lower() for termo in ['valor', 'frete', 'diaria', 'pedagio']):
+                # iter_rows garante que sempre tenhamos um iterável, evitando o erro de 'tuple'
+                for row in worksheet.iter_rows(min_row=4, min_col=idx+1, max_col=idx+1, max_row=len(df)+3):
+                    for cell in row:
+                        cell.number_format = 'R$ #,##0.00'
+                        
         output.seek(0)
         return send_file(
             output,

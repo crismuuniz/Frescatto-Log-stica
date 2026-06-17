@@ -91,7 +91,7 @@
             valor_carga: document.getElementById("valor_carga").value
         };
 
-        const res = await fetch("/api/rotas", {
+        const res = await fetch("/api/roteiros", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(dados)

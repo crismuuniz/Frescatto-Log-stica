@@ -769,6 +769,56 @@ def exportar_excel():
         # Se der erro, o navegador mostrará exatamente o que aconteceu
         return f"Erro ao gerar o arquivo: {str(e)}", 500
 
+@app.route("/api/exportar-devolucoes")
+def exportar_devolucoes_excel():
+    try:
+        inicio = request.args.get("inicio") or "2000-01-01"
+        fim = request.args.get("fim") or "2100-12-31"
+
+        conn = get_db()
+        query = "SELECT * FROM devolucoes WHERE data BETWEEN ? AND ?"
+        df = pd.read_sql_query(query, conn, params=(inicio, fim))
+        conn.close()
+
+        if df.empty:
+            return "Nenhuma devolução encontrada no período.", 404
+
+        output = io.BytesIO()
+        with pd.ExcelWriter(output, engine='openpyxl') as writer:
+            df.to_excel(writer, index=False, sheet_name='Devolucoes', startrow=2)
+            
+            worksheet = writer.sheets['Devolucoes']
+            
+            # Título
+            num_cols = len(df.columns)
+            col_letter = get_column_letter(num_cols)
+            worksheet.merge_cells(f'A1:{col_letter}1')
+            titulo = worksheet['A1']
+            titulo.value = "RELATÓRIO DE DEVOLUÇÕES"
+            titulo.font = Font(size=16, bold=True, color="FFFFFF")
+            titulo.fill = PatternFill(start_color="2F3542", end_color="2F3542", fill_type="solid")
+            titulo.alignment = Alignment(horizontal="center")
+
+            # Formatação de cabeçalhos
+            for cell in worksheet[3]:
+                cell.font = Font(bold=True)
+
+            # Ajuste de largura
+            for idx, col in enumerate(df.columns):
+                col_let = get_column_letter(idx + 1)
+                max_len = max(df[col].astype(str).map(len).max(), len(col)) + 4
+                worksheet.column_dimensions[col_let].width = max_len
+
+        output.seek(0)
+        return send_file(
+            output,
+            mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            download_name='Relatorio_Devolucoes.xlsx',
+            as_attachment=True
+        )
+    except Exception as e:
+        return f"Erro: {str(e)}", 500
+        
 # Rota simples para receber o texto extraído do OCR
 @app.route("/api/salvar-dados", methods=["POST"])
 def salvar_dados():

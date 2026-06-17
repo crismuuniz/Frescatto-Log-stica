@@ -98,6 +98,25 @@
         // Agora chamamos a rota passando os parâmetros de data
         window.location.href = `/api/exportar-excel?inicio=${inicio}&fim=${fim}`;
     }
+
+</script>
+
+<div class="btn-group">
+    <button style="background:#e74c3c" onclick="gerarExcel('fretes')">📊 Excel Fretes</button>
+    
+    <button style="background:#3498db" onclick="gerarExcel('devolucoes')">↩️ Excel Devoluções</button>
+</div>
+
+<script>
+    function gerarExcel(tipo) { 
+        const inicio = document.getElementById("inicio").value;
+        const fim = document.getElementById("fim").value;
+        
+        // Define a rota baseada no tipo clicado
+        const rota = tipo === 'fretes' ? '/api/exportar-excel' : '/api/exportar-devolucoes';
+        
+        window.location.href = `${rota}?inicio=${inicio}&fim=${fim}`;
+    }
 </script>
 
 </body>

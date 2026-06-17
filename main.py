@@ -290,22 +290,19 @@ def relatorios_page():
 
 # GET: Retorna as rotas
 
-@app.route("/api/roteiros", methods=["GET"])
-@app.route("/api/fretes", methods=["GET"])
-def get_rotas():
-    conn = get_db()
-    rows = conn.execute("SELECT * FROM rotas").fetchall()
-    conn.close()
-    return jsonify([dict(r) for r in rows])
-
-
-@app.route("/api/roteiros", methods=["POST"])
-@app.route("/api/fretes", methods=["POST"])
-def add_rota():
-    dados = request.json
-    conn = get_db()
-
-    veiculo = dados.get("veiculo") or dados.get("tipo_veiculo") or "Padrão"
+# Mapeamento único para evitar conflitos de 404
+@app.route("/api/roteiros", methods=["GET", "POST"])
+def gerenciar_roteiros():
+    if request.method == "GET":
+        conn = get_db()
+        rows = conn.execute("SELECT * FROM rotas").fetchall()
+        conn.close()
+        return jsonify([dict(r) for r in rows])
+    
+    if request.method == "POST":
+        dados = request.json
+        conn = get_db()
+        veiculo = dados.get("veiculo") or dados.get("tipo_veiculo") or "Padrão"
     
     # Agora está indentado corretamente dentro da função
     rota = (dados.get("descricao_rota") or dados.get("rota") or "")
@@ -324,66 +321,88 @@ def add_rota():
           dados.get("motorista"), dados.get("placa"), veiculo, 
           dados.get("codigo_roteiro") or dados.get("romaneio"), dados.get("descricao_rota"),
           dados.get("valor_coleta", 0), dados.get("quantidade_entregas", 0), 
-          dados.get("peso", 0), dados.get("volume", 0), dados.get("valor_carga", 0), 
+          dados.get("peso", 0), dados.get("volume", 0), dados.get("valor_carga", 0),
           km, pedagio, diaria, valor_final_frete))
-    
+
     conn.commit()
     conn.close()
     return jsonify({"status": "ok", "valor_calculado": valor_final_frete}), 201
     
-# PUT: Atualiza as informações recalculando o valor do frete
-@app.route("/api/roteiros/<int:id>", methods=["PUT"])
-@app.route("/api/fretes/<int:id>", methods=["PUT"])
-def update_rota(id):
-    dados = request.json
-    conn = get_db()
 
+# Rota para PUT (Atualizar)
+@app.route("/api/roteiros/<int:id>", methods=["PUT"])
+def update_roteiro(id):
     veiculo = dados.get("veiculo") or dados.get("tipo_veiculo") or "Padrão"
 
-    rota = (dados.get("descricao_rota") or dados.get("rota") or "")
+rota = (
+    dados.get("descricao_rota")
+    or dados.get("rota")
+    or ""
+) 
 
-    km = float(dados.get("km") or 0)
-    pedagio = float(dados.get("pedagio") or 0)
-    diaria = float(dados.get("diaria") or 0)
+km = float(dados.get("km") or 0)
+pedagio = float(dados.get("pedagio") or 0)
+diaria = float(dados.get("diaria") or 0)
 
-    valor_final_frete = calcular_frete_por_veiculo(veiculo, rota, km, pedagio, diaria)
+valor_final_frete = calcular_frete_por_veiculo(
+    veiculo,
+    rota,
+    km,
+    pedagio,
+    diaria
+)
 
-    conn.execute("""
+conn.execute("""
         UPDATE rotas SET
-            carga = ?, data_carga = ?, motorista = ?, placa = ?, veiculo = ?,
-            codigo_roteiro = ?, descricao_rota = ?, valor_coleta = ?,
-            quantidade_entregas = ?, peso = ?, volume = ?, valor_carga = ?,
-            km = ?, pedagio = ?, diaria = ?, valor_frete = ?
+            carga = ?,
+            data_carga = ?,
+            motorista = ?,
+            placa = ?,
+            veiculo = ?,
+            codigo_roteiro = ?,
+            descricao_rota = ?,
+            valor_coleta = ?,
+            quantidade_entregas = ?,
+            peso = ?,
+            volume = ?,
+            valor_carga = ?,
+            km = ?,
+            pedagio = ?,
+            diaria = ?,
+            valor_frete = ?
         WHERE id = ?
     """, (
         dados.get("carga") or dados.get("rota"),
         dados.get("data_carga") or dados.get("data"),
-        dados.get("motorista"), dados.get("placa"), veiculo,
+        dados.get("motorista"),
+        dados.get("placa"),
+        veiculo,
         dados.get("codigo_roteiro") or dados.get("romaneio"),
-        dados.get("descricao_rota"), dados.get("valor_coleta", 0),
-        dados.get("quantidade_entregas", 0), dados.get("peso", 0),
-        dados.get("volume", 0), dados.get("valor_carga", 0),
-        km, pedagio, diaria, valor_final_frete, id
+        dados.get("descricao_rota"),
+        dados.get("valor_coleta", 0),
+        dados.get("quantidade_entregas", 0),
+        dados.get("peso", 0),
+        dados.get("volume", 0),
+        dados.get("valor_carga", 0),
+        km,
+        pedagio,
+        diaria,
+        valor_final_frete,
+        id
     ))
 
-    conn.commit()
-    conn.close()
+conn.commit()
+conn.close()
 
-    return jsonify({"status": "ok", "valor_calculado": valor_final_frete})
+return jsonify({
+        "status": "ok",
+        "valor_calculado": valor_final_frete
+    })
 
-         
-# DELETE
 
-@app.route("/api/roteiros/<int:id>", methods=["DELETE"])
-@app.route("/api/fretes/<int:id>", methods=["DELETE"])
-def delete_rota(id):
-    conn = get_db()
-    conn.execute("DELETE FROM rotas WHERE id = ?", (id,))
-    conn.commit()
-    conn.close()
 
-    return jsonify({"status": "ok"})
-
+return jsonify({"status": "ok"})
+    
 
 # ==================================
 # API: CANHOTOS

@@ -93,8 +93,11 @@
 
     function gerarPDF() { window.open(`/relatorio/intervalo/pdf?inicio=${document.getElementById("inicio").value}&fim=${document.getElementById("fim").value}`, "_blank"); }
     function gerarExcel() { 
-    window.open(`/api/exportar-excel`, "_blank"); 
-}
+        const inicio = document.getElementById("inicio").value;
+        const fim = document.getElementById("fim").value;
+        // Agora chamamos a rota passando os parâmetros de data
+        window.open(`/api/exportar-excel?inicio=${inicio}&fim=${fim}`, "_blank"); 
+    }
 </script>
 
 </body>

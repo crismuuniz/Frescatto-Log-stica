@@ -757,15 +757,19 @@ def relatorio_pdf():
         as_attachment=True
     )
 
-@app.route("/api/exportar-excel", methods=["GET"])
+@app.route("/api/exportar-excel")
 def exportar_excel():
+    inicio = request.args.get("inicio") or "2000-01-01"
+    fim = request.args.get("fim") or "2100-12-31"
+
     conn = get_db()
-    # Busca todos os dados da tabela rotas
-    df = pd.read_sql_query("SELECT * FROM rotas", conn)
+    # O filtro de data foi adicionado aqui para coincidir com o PDF
+    query = "SELECT * FROM rotas WHERE data_carga BETWEEN ? AND ?"
+    df = pd.read_sql_query(query, conn, params=(inicio, fim))
     conn.close()
 
-    # Cria um buffer de memória para o arquivo Excel
     output = io.BytesIO()
+    # O uso do 'with' garante que o arquivo seja fechado corretamente na memória
     with pd.ExcelWriter(output, engine='openpyxl') as writer:
         df.to_excel(writer, index=False, sheet_name='Fretes')
     

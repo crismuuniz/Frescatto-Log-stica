@@ -261,11 +261,12 @@
 
     async function carregar() {
         try {
-            const res = await fetch(API);
-            canhotosCarregados = await res.json();
-
-            lista.innerHTML = "";
-
+            // Mude de /api/rotas para /api/roteiros
+    const res = await fetch("/api/roteiros", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(dados)
+});
             if (canhotosCarregados.length === 0) {
                 lista.innerHTML = `<tr><td colspan="7" class="empty">Nenhum canhoto aguardando ou registrado.</td></tr>`;
                 return;

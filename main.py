@@ -15,8 +15,7 @@ from PIL import Image, ImageEnhance, ImageOps
 from openpyxl.styles import Font, PatternFill, Alignment
 from openpyxl.utils import get_column_letter
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://usuario:senha@host_do_mysql/nome_do_banco'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
 
 os.environ['TESSDATA_PREFIX'] = '/usr/share/tesseract-ocr/4.00/tessdata'
 # Forçar o caminho do Tesseract no servidor Render

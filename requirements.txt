@@ -1,7 +1,9 @@
-flask
-pillow
-gunicorn
+Flask
+Flask-SQLAlchemy
+pymysql
 pandas
 reportlab
+Pillow
 openpyxl
-pytesseract
+gunicorn
+tesseract

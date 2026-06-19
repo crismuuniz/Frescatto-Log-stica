@@ -1,18 +1,22 @@
 import os
 import io
 import re
-import sqlite3
 import pandas as pd
 import reportlab
 import pytesseract
+import sqlite3
 
 from flask import Flask, request, jsonify, render_template, send_file
+from flask_sqlalchemy import SQLAlchemy
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
 from PIL import Image, ImageEnhance, ImageOps
 
 from openpyxl.styles import Font, PatternFill, Alignment
 from openpyxl.utils import get_column_letter
+
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://usuario:senha@host_do_mysql/nome_do_banco'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 os.environ['TESSDATA_PREFIX'] = '/usr/share/tesseract-ocr/4.00/tessdata'
 # Forçar o caminho do Tesseract no servidor Render
@@ -286,44 +290,20 @@ def relatorios_page():
 # ==================================
 
 # GET: Retorna as rotas
-
-# Mapeamento único para evitar conflitos de 404
-@app.route("/api/roteiros", methods=["GET", "POST"])
-def gerenciar_roteiros():
-    if request.method == "GET":
-        conn = get_db()
-        rows = conn.execute("SELECT * FROM rotas").fetchall()
-        conn.close()
-        return jsonify([dict(r) for r in rows])
-    
-    if request.method == "POST":
-        dados = request.json
-        conn = get_db()
-        
-        # DEFININDO VARIÁVEIS (TUDO DEVE ESTAR AQUI DENTRO)
-        veiculo = dados.get("veiculo") or dados.get("tipo_veiculo") or "Padrão"
-        rota = (dados.get("descricao_rota") or dados.get("rota") or "")
-        km = float(dados.get("km") or 0)
-        pedagio = float(dados.get("pedagio") or 0)
-        diaria = float(dados.get("diaria") or 0)
-
-        valor_final_frete = calcular_frete_por_veiculo(veiculo, rota, km, pedagio, diaria)
-
-        conn.execute("""
-            INSERT INTO rotas (carga, data_carga, motorista, placa, veiculo, codigo_roteiro, 
-                               descricao_rota, valor_coleta, quantidade_entregas, peso, volume, 
-                               valor_carga, km, pedagio, diaria, valor_frete)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (dados.get("carga") or dados.get("rota"), dados.get("data_carga") or dados.get("data"), 
-              dados.get("motorista"), dados.get("placa"), veiculo, 
-              dados.get("codigo_roteiro") or dados.get("romaneio"), dados.get("descricao_rota"),
-              dados.get("valor_coleta", 0), dados.get("quantidade_entregas", 0), 
-              dados.get("peso", 0), dados.get("volume", 0), dados.get("valor_carga", 0),
-              km, pedagio, diaria, valor_final_frete))
-
-        conn.commit()
-        conn.close()
-        return jsonify({"status": "ok", "valor_calculado": valor_final_frete}), 201
+@app.route("/api/roteiros", methods=["POST"])
+def adicionar_roteiro():
+    dados = request.json
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("""
+        INSERT INTO rotas (motorista, veiculo, codigo_roteiro, data_carga, km, pedagio, diaria, 
+                           carga, descricao_rota, quantidade_entregas, peso, volume) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """, (dados['motorista'], dados['veiculo'], dados['codigo_roteiro'], dados['data_carga'], 
+          dados['km'], dados['pedagio'], dados['diaria'], dados['carga'], dados['descricao_rota'], 
+          dados['quantidade_entregas'], dados['peso'], dados['volume']))
+    conn.commit()
+    return jsonify({"status": "sucesso"})
 
 # PUT: Atualiza as informações recalculando o valor do frete
 @app.route("/api/roteiros/<int:id>", methods=["PUT"])

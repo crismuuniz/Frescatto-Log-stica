@@ -252,9 +252,6 @@ def home():
 def canhotos_page():
     return render_template("canhotos.html")
 
-@app.route("/rotas")
-def rotas_page():
-   return render_template("rotas.html")
 
 @app.route("/fretes")
 def fretes_page():
@@ -818,7 +815,60 @@ def exportar_devolucoes_excel():
         )
     except Exception as e:
         return f"Erro: {str(e)}", 500
-        
+
+@app.route("/api/exportar-roteiros")
+def exportar_roteiros_excel():
+    try:
+        inicio = request.args.get("inicio") or "2000-01-01"
+        fim = request.args.get("fim") or "2100-12-31"
+
+        conn = get_db()
+        # Filtra os roteiros pelo período
+        query = "SELECT * FROM rotas WHERE data_carga BETWEEN ? AND ?"
+        df = pd.read_sql_query(query, conn, params=(inicio, fim))
+        conn.close()
+
+        if df.empty:
+            return "Nenhum roteiro encontrado no período.", 404
+
+        output = io.BytesIO()
+        with pd.ExcelWriter(output, engine='openpyxl') as writer:
+            df.to_excel(writer, index=False, sheet_name='Roteiros', startrow=2)
+            worksheet = writer.sheets['Roteiros']
+            
+            # Título e Estilo (mesmo padrão dos outros)
+            num_cols = len(df.columns)
+            col_letter = get_column_letter(num_cols)
+            worksheet.merge_cells(f'A1:{col_letter}1')
+            worksheet['A1'] = "RELATÓRIO DE ROTEIROS"
+            worksheet['A1'].font = Font(size=16, bold=True, color="FFFFFF")
+            worksheet['A1'].fill = PatternFill(start_color="C00000", end_color="C00000", fill_type="solid")
+            worksheet['A1'].alignment = Alignment(horizontal="center")
+
+            # Formatação de cabeçalho
+            for cell in worksheet[3]:
+                cell.font = Font(bold=True)
+                cell.fill = PatternFill(start_color="2F3542", end_color="2F3542", fill_type="solid")
+                cell.font = Font(color="FFFFFF", bold=True)
+
+            # Ajuste de largura e formatação (Corrigida a indentação)
+            for idx, col in enumerate(df.columns):
+                col_let = get_column_letter(idx + 1)
+                max_len = max(df[col].astype(str).map(len).max(), len(col)) + 4
+                worksheet.column_dimensions[col_let].width = max_len
+                
+                # Formato de moeda se for coluna financeira
+                if any(termo in col.lower() for termo in ['valor', 'frete', 'diaria', 'pedagio']):
+                    for row in worksheet.iter_rows(min_row=4, min_col=idx+1, max_col=idx+1, max_row=len(df)+3):
+                        for cell in row:
+                            cell.number_format = 'R$ #,##0.00'
+
+        output.seek(0)
+        return send_file(output, mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                         download_name='Relatorio_Roteiros.xlsx', as_attachment=True)
+    except Exception as e:
+        return f"Erro: {str(e)}", 500
+
 # Rota simples para receber o texto extraído do OCR
 @app.route("/api/salvar-dados", methods=["POST"])
 def salvar_dados():

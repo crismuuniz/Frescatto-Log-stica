@@ -7,19 +7,19 @@
     <script src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'></script>
 
     <style>
-        *{ margin:0; padding:0; box-sizing:border-box; }
-        body{ font-family:Arial, Helvetica, sans-serif; background:#f4f6f9; color:#333; }
-        .header{ background:#c00000; color:white; padding:25px; text-align:center; box-shadow:0 2px 10px rgba(0,0,0,.15); }
-        .container{ max-width:1200px; margin:30px auto; padding:0 20px; }
-        .card{ background:white; border-radius:12px; padding:25px; margin-bottom:25px; box-shadow:0 4px 12px rgba(0,0,0,.08); }
-        .menu-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:15px; }
-        .menu-item{ text-decoration:none; color:#333; background:#f8f9fa; border:1px solid #ddd; border-radius:10px; padding:20px; text-align:center; font-weight:bold; transition:.3s; }
-        .menu-item:hover{ background:#c00000; color:white; }
-        .form-group{ margin-bottom:15px; }
-        .btn-group{ display:flex; gap:15px; margin-top:20px; }
-        button{ border:none; border-radius:6px; padding:12px 20px; cursor:pointer; color:white; font-weight:bold; }
-        .btn-ocr{ background:#c00000; margin-top:15px; }
-        #resultadoOCR{ margin-top:15px; padding:15px; background:#f8f9fa; border-radius:6px; display:none; white-space:pre-wrap; border:1px solid #ddd; }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:Arial, Helvetica, sans-serif; background:#f4f6f9; color:#333; }
+        .header { background:#c00000; color:white; padding:25px; text-align:center; box-shadow:0 2px 10px rgba(0,0,0,.15); }
+        .container { max-width:1200px; margin:30px auto; padding:0 20px; }
+        .card { background:white; border-radius:12px; padding:25px; margin-bottom:25px; box-shadow:0 4px 12px rgba(0,0,0,.08); }
+        .menu-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:15px; }
+        .menu-item { text-decoration:none; color:#333; background:#f8f9fa; border:1px solid #ddd; border-radius:10px; padding:20px; text-align:center; font-weight:bold; transition:.3s; }
+        .menu-item:hover { background:#c00000; color:white; }
+        .form-group { margin-bottom:15px; }
+        .btn-group { display:flex; gap:15px; margin-top:20px; flex-wrap: wrap; }
+        button { border:none; border-radius:6px; padding:12px 20px; cursor:pointer; color:white; font-weight:bold; }
+        .btn-ocr { background:#c00000; margin-top:15px; }
+        #resultadoOCR { margin-top:15px; padding:15px; background:#f8f9fa; border-radius:6px; display:none; white-space:pre-wrap; border:1px solid #ddd; }
     </style>
 </head>
 <body>
@@ -51,8 +51,10 @@
             <input type="date" id="fim">
         </div>
         <div class="btn-group">
-            <button class="btn-ocr" style="background:#e74c3c" onclick="gerarPDF()">📄 PDF</button>
-            <button class="btn-ocr" style="background:#27ae60" onclick="gerarExcel()">📊 Excel</button>
+            <button style="background:#e74c3c" onclick="gerarPDF()">📄 PDF Geral</button>
+            <button style="background:#c0392b" onclick="gerarExcel('fretes')">📊 Excel Fretes</button>
+            <button style="background:#2980b9" onclick="gerarExcel('roteiros')">🚚 Excel Roteiros</button>
+            <button style="background:#27ae60" onclick="gerarExcel('devolucoes')">↩️ Excel Devoluções</button>
         </div>
     </div>
 
@@ -65,6 +67,37 @@
 </div>
 
 <script>
+    // Configuração de datas padrão ao carregar a página
+    window.addEventListener("DOMContentLoaded", () => {
+        const hoje = new Date();
+        document.getElementById("inicio").value = new Date(hoje.getFullYear(), hoje.getMonth(), 1).toISOString().split('T')[0];
+        document.getElementById("fim").value = hoje.toISOString().split('T')[0];
+    });
+
+    // Função PDF
+    function gerarPDF() { 
+        const inicio = document.getElementById("inicio").value;
+        const fim = document.getElementById("fim").value;
+        window.open(`/relatorio/intervalo/pdf?inicio=${inicio}&fim=${fim}`, "_blank"); 
+    }
+
+    // Função Excel unificada
+    function gerarExcel(tipo) { 
+        const inicio = document.getElementById("inicio").value;
+        const fim = document.getElementById("fim").value;
+        
+        const rotas = {
+            'fretes': '/api/exportar-excel',
+            'roteiros': '/api/exportar-roteiros',
+            'devolucoes': '/api/exportar-devolucoes'
+        };
+        
+        const url = rotas[tipo];
+        if (url) {
+            window.location.href = `${url}?inicio=${inicio}&fim=${fim}`;
+        }
+    }
+
     // Lógica OCR
     async function processarOCR() {
         const fileInput = document.getElementById("fileInput");
@@ -82,40 +115,6 @@
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ texto_ocr: text })
         });
-    }
-
-    // Datas iniciais
-    window.addEventListener("DOMContentLoaded", () => {
-        const hoje = new Date();
-        document.getElementById("inicio").value = new Date(hoje.getFullYear(), hoje.getMonth(), 1).toISOString().split('T')[0];
-        document.getElementById("fim").value = hoje.toISOString().split('T')[0];
-    });
-
-    function gerarPDF() { window.open(`/relatorio/intervalo/pdf?inicio=${document.getElementById("inicio").value}&fim=${document.getElementById("fim").value}`, "_blank"); }
-    function gerarExcel() { 
-        const inicio = document.getElementById("inicio").value;
-        const fim = document.getElementById("fim").value;
-        // Agora chamamos a rota passando os parâmetros de data
-        window.location.href = `/api/exportar-excel?inicio=${inicio}&fim=${fim}`;
-    }
-
-</script>
-
-<div class="btn-group">
-    <button style="background:#e74c3c" onclick="gerarExcel('fretes')">📊 Excel Fretes</button>
-    
-    <button style="background:#3498db" onclick="gerarExcel('devolucoes')">↩️ Excel Devoluções</button>
-</div>
-
-<script>
-    function gerarExcel(tipo) { 
-        const inicio = document.getElementById("inicio").value;
-        const fim = document.getElementById("fim").value;
-        
-        // Define a rota baseada no tipo clicado
-        const rota = tipo === 'fretes' ? '/api/exportar-excel' : '/api/exportar-devolucoes';
-        
-        window.location.href = `${rota}?inicio=${inicio}&fim=${fim}`;
     }
 </script>
 

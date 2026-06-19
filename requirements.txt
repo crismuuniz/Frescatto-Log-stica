@@ -6,4 +6,4 @@ reportlab
 Pillow
 openpyxl
 gunicorn
-tesseract
+pytesseract

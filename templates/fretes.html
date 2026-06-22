@@ -37,6 +37,7 @@
             <input id="romaneio" placeholder="Romaneio" required>
             <input type="number" id="entregas" placeholder="Qtd Entregas">
             <input id="peso" placeholder="Peso (ex: 320KG)">
+            <input id="observacoes" placeholder="Observações">
             
             <select id="modelo_veiculo" required>
                 <option value="">Selecione o Modelo...</option>
@@ -95,6 +96,7 @@
             frete: document.getElementById("frete").value,
             acrescimo: document.getElementById("acrescimo").value,
             descricao_rota: document.getElementById("descricao_rota").value
+            observacoes: document.getElementById("observacoes").value
         };
 
         const res = await fetch("/api/roteiros", {

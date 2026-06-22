@@ -303,7 +303,7 @@ def adicionar_roteiro():
           dados['quantidade_entregas'], dados['peso'], dados['volume']))
     conn.commit()
     return jsonify({"status": "sucesso"})
-
+    
 # PUT: Atualiza as informações recalculando o valor total (Frete + Acréscimo)
 @app.route("/api/roteiros/<int:id>", methods=["PUT"])
 @app.route("/api/fretes/<int:id>", methods=["PUT"])
@@ -311,15 +311,17 @@ def update_rota(id):
     dados = request.json
     conn = get_db()
 
-    # Novos campos conforme solicitado
+    # Coleta de dados
     modelo_veiculo = dados.get("modelo_veiculo")
     frete_base = float(dados.get("frete") or 0)
     acrescimo = float(dados.get("acrescimo") or 0)
     descricao_rota = dados.get("descricao_rota")
+    observacoes = dados.get("observacoes", "")
     
-    # Cálculo simples
+    # Cálculo
     valor_final = frete_base + acrescimo
 
+    # Execução única do UPDATE
     conn.execute("""
         UPDATE rotas SET
             data_carga = ?, 
@@ -332,7 +334,8 @@ def update_rota(id):
             peso = ?, 
             frete = ?, 
             acrescimo = ?, 
-            valor_frete = ?
+            valor_frete = ?,
+            observacoes = ?
         WHERE id = ?
     """, (
         dados.get("data"),
@@ -345,14 +348,14 @@ def update_rota(id):
         dados.get("peso"), 
         frete_base, 
         acrescimo, 
-        valor_final, 
+        valor_final,
+        observacoes,
         id
     ))
 
     conn.commit()
-    conn.close() 
+    conn.close()
     return jsonify({"status": "ok", "valor_final": valor_final})
-
 
 
 # ==================================

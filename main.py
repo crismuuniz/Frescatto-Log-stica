@@ -371,9 +371,9 @@ def get_canhotos():
 @app.route("/api/canhotos", methods=["POST"])
 def add_canhoto():
    dados = request.json
-    conn = get_db()
+   conn = get_db()
 
-    conn.execute("""
+   conn.execute("""
         INSERT INTO canhotos (
             nota_fiscal,
             cliente,
@@ -390,10 +390,10 @@ def add_canhoto():
         dados.get("status", "Pendente")
     ))
 
-    conn.commit()
-    conn.close()
+   conn.commit()
+   conn.close()
 
-    return jsonify({"status": "ok"}), 201
+   return jsonify({"status": "ok"}), 201
 
 @app.route("/api/canhotos/<int:id>", methods=["DELETE"])
 def delete_canhoto(id):

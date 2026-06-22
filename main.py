@@ -345,16 +345,16 @@ def update_rota(id):
         dados.get("data"),
         dados.get("motorista"), 
         dados.get("placa"), 
-        modelo_veiculo,
+        dados.get ("modelo_veiculo"),
         dados.get("romaneio"), 
-        descricao_rota, 
+        dados.get("descricao_rota"), 
         dados.get("entregas", 0), 
         dados.get("peso"), 
-        frete_base, 
-        acrescimo, 
-        valor_final,
-        observacoes,
-        responsavel,
+        dados.get("frete_base"), 
+        dados.get("acrescimo"), 
+        dados.get("valor_final"),
+        dados.get("observacoes"),
+        dados.get("responsavel"),
         id
     ))
 

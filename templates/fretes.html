@@ -9,12 +9,12 @@
         body { font-family: 'Segoe UI', Arial, sans-serif; background: #f1f2f6; padding: 20px; }
         .container { max-width: 1200px; margin: auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
-        input, select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; }
+        input, select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
         table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 14px; }
         th { background: var(--dark); color: white; padding: 10px; }
         td { padding: 10px; border-bottom: 1px solid #eee; text-align: center; }
-        .btn-acao { background: var(--primary); color: white; padding: 12px 20px; border: none; border-radius: 5px; cursor: pointer; }
-        #resultadoOCR { margin: 10px 0; padding: 10px; background: #eee; display: none; }
+        .btn-acao { background: var(--primary); color: white; padding: 12px 20px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        #resultadoOCR { margin: 10px 0; padding: 10px; background: #eee; display: none; border-radius: 5px; }
     </style>
 </head>
 <body>
@@ -33,19 +33,21 @@
         <div class="form-grid">
             <input type="date" id="data" required>
             <input id="motorista" placeholder="Motorista" required>
-            <input id="rota" placeholder="Rota" required>
             <input id="placa" placeholder="Placa" required>
             <input id="romaneio" placeholder="Romaneio" required>
             <input type="number" id="entregas" placeholder="Qtd Entregas">
             <input id="peso" placeholder="Peso (ex: 320KG)">
-            <select id="veiculo" required>
-                <option value="">Selecione Veículo...</option>
-                <option value="fiorino" data-taxa="2.20">Fiorino</option>
-                <option value="vlc" data-taxa="2.80">VLC</option>
-                <option value="toco" data-taxa="4.10">Toco</option>
+            
+            <select id="modelo_veiculo" required>
+                <option value="">Selecione o Modelo...</option>
+                <option value="fiorino">Fiorino</option>
+                <option value="3/4">3/4</option>
+                <option value="hr">HR</option>
+                <option value="bongo">Bongo</option>
             </select>
-            <input type="number" id="km" placeholder="KM Rodados" step="0.1">
-            <input type="number" id="valor_carga" placeholder="Valor Carga R$">
+            <input type="number" id="frete" placeholder="Valor do Frete R$" step="0.01" required>
+            <input type="number" id="acrescimo" placeholder="Acréscimo R$" step="0.01" value="0.00">
+            <input id="descricao_rota" placeholder="Descrição da Rota" required>
         </div>
         <button type="submit" class="btn-acao" style="background:green">Salvar Lançamento</button>
     </form>
@@ -53,8 +55,8 @@
     <table>
         <thead>
             <tr>
-                <th>Data</th><th>Motorista</th><th>Rota</th><th>Placa</th>
-                <th>Romaneio</th><th>Entregas</th><th>Peso</th><th>Veículo</th><th>Frete</th>
+                <th>Data</th><th>Motorista</th><th>Placa</th><th>Modelo</th>
+                <th>Entregas</th><th>Rota</th><th>Frete Base</th><th>Acréscimo</th>
             </tr>
         </thead>
         <tbody id="lista"></tbody>
@@ -62,33 +64,37 @@
 </div>
 
 <script>
-    // OCR no Front
     async function processarOCR() {
         const file = document.getElementById("fileInput").files[0];
+        if(!file) return alert("Selecione uma imagem!");
+        
         const resDiv = document.getElementById("resultadoOCR");
         resDiv.style.display = "block";
         resDiv.innerText = "Lendo...";
         
         const { data: { text } } = await Tesseract.recognize(file, 'por');
         resDiv.innerText = "Extraído: " + text.substring(0, 100) + "...";
-        // Envio para o backend conforme definido anteriormente
-        await fetch("/api/salvar-dados", { method: "POST", headers: {'Content-Type': 'application/json'}, body: JSON.stringify({texto_ocr: text}) });
+        
+        await fetch("/api/salvar-dados", { 
+            method: "POST", 
+            headers: {'Content-Type': 'application/json'}, 
+            body: JSON.stringify({texto_ocr: text}) 
+        });
     }
 
-    // Envio do formulário
     document.getElementById("form").addEventListener("submit", async (e) => {
         e.preventDefault();
         const dados = {
             data: document.getElementById("data").value,
             motorista: document.getElementById("motorista").value,
-            rota: document.getElementById("rota").value,
             placa: document.getElementById("placa").value,
             romaneio: document.getElementById("romaneio").value,
             entregas: document.getElementById("entregas").value,
             peso: document.getElementById("peso").value,
-            veiculo: document.getElementById("veiculo").value,
-            km: document.getElementById("km").value,
-            valor_carga: document.getElementById("valor_carga").value
+            modelo_veiculo: document.getElementById("modelo_veiculo").value,
+            frete: document.getElementById("frete").value,
+            acrescimo: document.getElementById("acrescimo").value,
+            descricao_rota: document.getElementById("descricao_rota").value
         };
 
         const res = await fetch("/api/roteiros", {

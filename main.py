@@ -304,44 +304,57 @@ def adicionar_roteiro():
     conn.commit()
     return jsonify({"status": "sucesso"})
 
-# PUT: Atualiza as informações recalculando o valor do frete
+# PUT: Atualiza as informações recalculando o valor total (Frete + Acréscimo)
 @app.route("/api/roteiros/<int:id>", methods=["PUT"])
 @app.route("/api/fretes/<int:id>", methods=["PUT"])
 def update_rota(id):
     dados = request.json
     conn = get_db()
 
-    veiculo = dados.get("veiculo") or dados.get("tipo_veiculo") or "Padrão"
-    rota = (dados.get("descricao_rota") or dados.get("rota") or "")
-    km = float(dados.get("km") or 0)
-    pedagio = float(dados.get("pedagio") or 0)
-    diaria = float(dados.get("diaria") or 0)
-
-    valor_final_frete = calcular_frete_por_veiculo(veiculo, rota, km, pedagio, diaria)
+    # Novos campos conforme solicitado
+    modelo_veiculo = dados.get("modelo_veiculo")
+    frete_base = float(dados.get("frete") or 0)
+    acrescimo = float(dados.get("acrescimo") or 0)
+    descricao_rota = dados.get("descricao_rota")
+    
+    # Cálculo simples
+    valor_final = frete_base + acrescimo
 
     conn.execute("""
         UPDATE rotas SET
-            carga = ?, data_carga = ?, motorista = ?, placa = ?, veiculo = ?,
-            codigo_roteiro = ?, descricao_rota = ?, valor_coleta = ?,
-            quantidade_entregas = ?, peso = ?, volume = ?, valor_carga = ?,
-            km = ?, pedagio = ?, diaria = ?, valor_frete = ?
+            data_carga = ?, 
+            motorista = ?, 
+            placa = ?, 
+            modelo_veiculo = ?,
+            romaneio = ?, 
+            descricao_rota = ?, 
+            quantidade_entregas = ?, 
+            peso = ?, 
+            frete = ?, 
+            acrescimo = ?, 
+            valor_frete = ?
         WHERE id = ?
     """, (
-        dados.get("carga") or dados.get("rota"),
-        dados.get("data_carga") or dados.get("data"),
-        dados.get("motorista"), dados.get("placa"), veiculo,
-        dados.get("codigo_roteiro") or dados.get("romaneio"),
-        dados.get("descricao_rota"), dados.get("valor_coleta", 0),
-        dados.get("quantidade_entregas", 0), dados.get("peso", 0),
-        dados.get("volume", 0), dados.get("valor_carga", 0),
-        km, pedagio, diaria, valor_final_frete, id
+        dados.get("data"),
+        dados.get("motorista"), 
+        dados.get("placa"), 
+        modelo_veiculo,
+        dados.get("romaneio"), 
+        descricao_rota, 
+        dados.get("entregas", 0), 
+        dados.get("peso"), 
+        frete_base, 
+        acrescimo, 
+        valor_final, 
+        id
     ))
 
     conn.commit()
-    conn.close()
+    conn.close() 
+    return jsonify({"status": "ok", "valor_final": valor_final})
 
-    # O return deve estar recuado (dentro da função)
-    return jsonify({"status": "ok", "valor_calculado": valor_final_frete})
+
+
 # ==================================
 # API: CANHOTOS
 # ==================================
@@ -357,7 +370,7 @@ def get_canhotos():
 
 @app.route("/api/canhotos", methods=["POST"])
 def add_canhoto():
-    dados = request.json
+   dados = request.json
     conn = get_db()
 
     conn.execute("""

@@ -15,7 +15,8 @@ from PIL import Image, ImageEnhance, ImageOps
 from openpyxl.styles import Font, PatternFill, Alignment
 from openpyxl.utils import get_column_letter
 
-
+# Lista que servirá como banco de dados temporário
+db_roteiros_memoria = []
 
 os.environ['TESSDATA_PREFIX'] = '/usr/share/tesseract-ocr/4.00/tessdata'
 # Forçar o caminho do Tesseract no servidor Render
@@ -288,21 +289,25 @@ def relatorios_page():
 # API: MÓDULO UNIFICADO DE ROTAS E FRETES (COM CÁLCULO DE KM)
 # ==================================
 
-# GET: Retorna as rotas
 @app.route("/api/roteiros", methods=["POST"])
 def adicionar_roteiro():
     dados = request.json
-    conn = get_db()
-    cursor = conn.cursor()
-    cursor.execute("""
-        INSERT INTO rotas (motorista, veiculo, codigo_roteiro, data_carga, km, pedagio, diaria, 
-                           carga, descricao_rota, quantidade_entregas, peso, volume) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    """, (dados['motorista'], dados['veiculo'], dados['codigo_roteiro'], dados['data_carga'], 
-          dados['km'], dados['pedagio'], dados['diaria'], dados['carga'], dados['descricao_rota'], 
-          dados['quantidade_entregas'], dados['peso'], dados['volume']))
-    conn.commit()
-    return jsonify({"status": "sucesso"})
+    
+    # Validação simples para não salvar vazio
+    if not dados:
+        return jsonify({"status": "erro", "mensagem": "Nenhum dado recebido"}), 400
+        
+    # Adiciona os dados na nossa "tabela" em memória
+    db_roteiros_memoria.append(dados)
+    
+    print(f"Dados recebidos e salvos na memória: {dados}") # Debug no terminal
+    
+    return jsonify({"status": "sucesso", "mensagem": "Roteiro salvo na memória!"}), 201
+
+# Rota para você visualizar o que foi salvo (útil para conferência)
+@app.route("/api/roteiros", methods=["GET"])
+def get_roteiros():
+    return jsonify(db_roteiros_memoria)
 
 # PUT: Atualiza as informações recalculando o valor total (Frete + Acréscimo)
 @app.route("/api/roteiros/<int:id>", methods=["PUT"])

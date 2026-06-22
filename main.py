@@ -15,8 +15,10 @@ from PIL import Image, ImageEnhance, ImageOps
 from openpyxl.styles import Font, PatternFill, Alignment
 from openpyxl.utils import get_column_letter
 
-# Lista que servirá como banco de dados temporário
-db_roteiros_memoria = []
+# Listas globais em memória
+db_rotas = []
+db_canhotos = []
+db_devolucoes = []
 
 os.environ['TESSDATA_PREFIX'] = '/usr/share/tesseract-ocr/4.00/tessdata'
 # Forçar o caminho do Tesseract no servidor Render
@@ -292,22 +294,17 @@ def relatorios_page():
 @app.route("/api/roteiros", methods=["POST"])
 def adicionar_roteiro():
     dados = request.json
-    
-    # Validação simples para não salvar vazio
     if not dados:
-        return jsonify({"status": "erro", "mensagem": "Nenhum dado recebido"}), 400
-        
-    # Adiciona os dados na nossa "tabela" em memória
-    db_roteiros_memoria.append(dados)
-    
-    print(f"Dados recebidos e salvos na memória: {dados}") # Debug no terminal
-    
-    return jsonify({"status": "sucesso", "mensagem": "Roteiro salvo na memória!"}), 201
+        return jsonify({"status": "erro"}), 400
+    dados['id'] = len(db_rotas) + 1
+    db_rotas.append(dados)
+    return jsonify({"status": "sucesso", "id": dados['id']}), 201
 
 # Rota para você visualizar o que foi salvo (útil para conferência)
 @app.route("/api/roteiros", methods=["GET"])
 def get_roteiros():
-    return jsonify(db_roteiros_memoria)
+    return jsonify(db_rotas)
+
 
 # PUT: Atualiza as informações recalculando o valor total (Frete + Acréscimo)
 @app.route("/api/roteiros/<int:id>", methods=["PUT"])
@@ -374,39 +371,15 @@ def update_rota(id):
 
 @app.route("/api/canhotos", methods=["GET"])
 def get_canhotos():
-    conn = get_db()
-    rows = conn.execute("SELECT * FROM canhotos").fetchall()
-    conn.close()
-
-    return jsonify([dict(r) for r in rows])
+    return jsonify(db_canhotos)
 
 
 @app.route("/api/canhotos", methods=["POST"])
 def add_canhoto():
-   dados = request.json
-   conn = get_db()
-
-   conn.execute("""
-        INSERT INTO canhotos (
-            nota_fiscal,
-            cliente,
-            carga,
-            data_entrega,
-            status
-        )
-        VALUES (?, ?, ?, ?, ?)
-    """, (
-        dados.get("nota_fiscal"),
-        dados.get("cliente"),
-        dados.get("carga"),
-        dados.get("data_entrega"),
-        dados.get("status", "Pendente")
-    ))
-
-   conn.commit()
-   conn.close()
-
-   return jsonify({"status": "ok"}), 201
+    dados = request.json
+    dados['id'] = len(db_canhotos) + 1
+    db_canhotos.append(dados)
+    return jsonify({"status": "ok"}), 201
 
 @app.route("/api/canhotos/<int:id>", methods=["DELETE"])
 def delete_canhoto(id):
@@ -423,37 +396,14 @@ def delete_canhoto(id):
 
 @app.route("/api/devolucoes", methods=["GET"])
 def get_devolucoes():
-    conn = get_db()
-    rows = conn.execute("SELECT * FROM devolucoes").fetchall()
-    conn.close()
-    return jsonify([dict(r) for r in rows])
+    return jsonify(db_devolucoes)
 
 
 @app.route("/api/devolucoes", methods=["POST"])
 def add_devolucao():
     dados = request.json
-    conn = get_db()
-
-    conn.execute("""
-        INSERT INTO devolucoes (
-            nota_fiscal,
-            cliente,
-            motivo,
-            data,
-            status
-        )
-        VALUES (?, ?, ?, ?, ?)
-    """, (
-        dados.get("nota_fiscal"),
-        dados.get("cliente"),
-        dados.get("motivo"),
-        dados.get("data"),
-        dados.get("status", "Pendente")
-    ))
-
-    conn.commit()
-    conn.close()
-
+    dados['id'] = len(db_devolucoes) + 1
+    db_devolucoes.append(dados)
     return jsonify({"status": "ok"}), 201
 
 
@@ -829,22 +779,26 @@ def exportar_roteiros_excel():
         inicio = request.args.get("inicio") or "2000-01-01"
         fim = request.args.get("fim") or "2100-12-31"
 
-        conn = get_db()
-        # Filtra os roteiros pelo período
-        query = "SELECT * FROM rotas WHERE data_carga BETWEEN ? AND ?"
-        df = pd.read_sql_query(query, conn, params=(inicio, fim))
-        conn.close()
+        # 1. Converte a lista em memória para um DataFrame
+        if not db_roteiros_memoria:
+            return "Nenhum roteiro encontrado na memória.", 404
+            
+        df = pd.DataFrame(db_roteiros_memoria)
 
-        if df.empty:
+        # 2. Filtra pelo período (garantindo que a coluna seja tratada como data)
+        df['data_carga'] = pd.to_datetime(df['data_carga'])
+        df_filtrado = df[(df['data_carga'] >= inicio) & (df['data_carga'] <= fim)].copy()
+
+        if df_filtrado.empty:
             return "Nenhum roteiro encontrado no período.", 404
 
         output = io.BytesIO()
         with pd.ExcelWriter(output, engine='openpyxl') as writer:
-            df.to_excel(writer, index=False, sheet_name='Roteiros', startrow=2)
+            df_filtrado.to_excel(writer, index=False, sheet_name='Roteiros', startrow=2)
             worksheet = writer.sheets['Roteiros']
             
-            # Título e Estilo (mesmo padrão dos outros)
-            num_cols = len(df.columns)
+            # Título e Estilo
+            num_cols = len(df_filtrado.columns)
             col_letter = get_column_letter(num_cols)
             worksheet.merge_cells(f'A1:{col_letter}1')
             worksheet['A1'] = "RELATÓRIO DE ROTEIROS"
@@ -854,19 +808,17 @@ def exportar_roteiros_excel():
 
             # Formatação de cabeçalho
             for cell in worksheet[3]:
-                cell.font = Font(bold=True)
+                cell.font = Font(bold=True, color="FFFFFF")
                 cell.fill = PatternFill(start_color="2F3542", end_color="2F3542", fill_type="solid")
-                cell.font = Font(color="FFFFFF", bold=True)
 
-            # Ajuste de largura e formatação (Corrigida a indentação)
-            for idx, col in enumerate(df.columns):
+            # Ajuste de largura e formatação financeira
+            for idx, col in enumerate(df_filtrado.columns):
                 col_let = get_column_letter(idx + 1)
-                max_len = max(df[col].astype(str).map(len).max(), len(col)) + 4
+                max_len = max(df_filtrado[col].astype(str).map(len).max(), len(col)) + 4
                 worksheet.column_dimensions[col_let].width = max_len
                 
-                # Formato de moeda se for coluna financeira
                 if any(termo in col.lower() for termo in ['valor', 'frete', 'diaria', 'pedagio']):
-                    for row in worksheet.iter_rows(min_row=4, min_col=idx+1, max_col=idx+1, max_row=len(df)+3):
+                    for row in worksheet.iter_rows(min_row=4, min_col=idx+1, max_col=idx+1, max_row=len(df_filtrado)+3):
                         for cell in row:
                             cell.number_format = 'R$ #,##0.00'
 

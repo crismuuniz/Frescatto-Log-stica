@@ -350,11 +350,11 @@ def update_rota(id):
         dados.get("descricao_rota"), 
         dados.get("entregas", 0), 
         dados.get("peso"), 
-        dados.get("frete_base"), 
-        dados.get("acrescimo"), 
-        dados.get("valor_final"),
-        dados.get("observacoes"),
-        dados.get("responsavel"),
+        frete_base, 
+        acrescimo, 
+        valor_final,
+        observacoes,
+        responsavel,
         id
     ))
 
@@ -766,7 +766,7 @@ def exportar_excel():
             as_attachment=True
         )
     except Exception as e:
-        return f"Erro ao gerar o arquivo: {str(e)}", 500500
+        return f"Erro ao gerar o arquivo: {str(e)}", 500
 
 @app.route("/api/exportar-devolucoes")
 def exportar_devolucoes_excel():

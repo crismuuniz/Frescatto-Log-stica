@@ -46,6 +46,15 @@
                 <option value="hr">HR</option>
                 <option value="bongo">Bongo</option>
             </select>
+            <div class="form-group">
+                <label>RESPONSÁVEL</label>
+                <select id="responsavel" required>
+                    <option value="">Selecione o Nome...</option>
+                    <option value="Bernardo">Bernardo</option>
+                    <option value="Renato">Renato</option>
+                    <option value="Pedro">Pedro</option>
+                </select>
+            </div>
             <input type="number" id="frete" placeholder="Valor do Frete R$" step="0.01" required>
             <input type="number" id="acrescimo" placeholder="Acréscimo R$" step="0.01" value="0.00">
             <input id="descricao_rota" placeholder="Descrição da Rota" required>
@@ -96,7 +105,7 @@
             frete: document.getElementById("frete").value,
             acrescimo: document.getElementById("acrescimo").value,
             descricao_rota: document.getElementById("descricao_rota").value
-            observacoes: document.getElementById("observacoes").value
+            
         };
 
         const res = await fetch("/api/roteiros", {

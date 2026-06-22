@@ -303,7 +303,7 @@ def adicionar_roteiro():
           dados['quantidade_entregas'], dados['peso'], dados['volume']))
     conn.commit()
     return jsonify({"status": "sucesso"})
-    
+
 # PUT: Atualiza as informações recalculando o valor total (Frete + Acréscimo)
 @app.route("/api/roteiros/<int:id>", methods=["PUT"])
 @app.route("/api/fretes/<int:id>", methods=["PUT"])
@@ -317,6 +317,8 @@ def update_rota(id):
     acrescimo = float(dados.get("acrescimo") or 0)
     descricao_rota = dados.get("descricao_rota")
     observacoes = dados.get("observacoes", "")
+    responsavel = dados.get("responsavel")
+
     
     # Cálculo
     valor_final = frete_base + acrescimo
@@ -335,7 +337,9 @@ def update_rota(id):
             frete = ?, 
             acrescimo = ?, 
             valor_frete = ?,
-            observacoes = ?
+            observacoes = ?,
+            responsavel = ?
+
         WHERE id = ?
     """, (
         dados.get("data"),
@@ -350,6 +354,7 @@ def update_rota(id):
         acrescimo, 
         valor_final,
         observacoes,
+        responsavel,
         id
     ))
 
@@ -693,7 +698,6 @@ def relatorio_pdf():
         download_name=f"relatorio_{inicio}_{fim}.pdf",
         as_attachment=True
     )
-
 @app.route("/api/exportar-excel")
 def exportar_excel():
     try:
@@ -710,56 +714,59 @@ def exportar_excel():
 
         output = io.BytesIO()
         with pd.ExcelWriter(output, engine='openpyxl') as writer:
-            # 1. Exportar dados começando na linha 3
-            df.to_excel(writer, index=False, sheet_name='Fretes', startrow=2)
-            
-            workbook = writer.book
-            worksheet = writer.sheets['Fretes']
-            
-            # 2. Título Dinâmico (Mescla baseado na quantidade de colunas)
-            num_cols = len(df.columns)
-            ultima_coluna_letra = get_column_letter(num_cols)
-            intervalo_titulo = f'A1:{ultima_coluna_letra}1'
-            
-            worksheet.merge_cells(intervalo_titulo)
-            titulo = worksheet['A1']
-            titulo.value = "TABELA DE FRETES MOTORISTAS TERCEIRIZADOS"
-            titulo.font = Font(size=16, bold=True, color="FFFFFF")
-            titulo.fill = PatternFill(start_color="C00000", end_color="C00000", fill_type="solid")
-            titulo.alignment = Alignment(horizontal="center")
+            responsaveis = ["Bernardo", "Renato", "Pedro"]
 
-            # 3. Formatação dos Cabeçalhos (Linha 3)
-            header_font = Font(bold=True, color="FFFFFF")
-            header_fill = PatternFill(start_color="2F3542", end_color="2F3542", fill_type="solid")
-            for cell in worksheet[3]:
-                cell.font = header_font
-                cell.fill = header_fill
+            for nome in responsaveis:
+                # Filtra o dataframe para cada responsável
+                df_filtrado = df[df['responsavel'] == nome]
+                
+                # Se não houver dados para o responsável, pula a aba
+                if df_filtrado.empty:
+                    continue
 
-            # 4. Formatação de Moeda e Ajuste de Largura
-        for idx, col in enumerate(df.columns):
-            col_letter = get_column_letter(idx + 1)
-            
-            # Ajuste de largura automático
-            max_len = max(df[col].astype(str).map(len).max(), len(col)) + 4
-            worksheet.column_dimensions[col_letter].width = max_len
+                # 1. Exportar dados começando na linha 3
+                df_filtrado.to_excel(writer, index=False, sheet_name=nome, startrow=2)
+                
+                worksheet = writer.sheets[nome]
+                
+                # 2. Título Dinâmico
+                num_cols = len(df_filtrado.columns)
+                ultima_coluna_letra = get_column_letter(num_cols)
+                worksheet.merge_cells(f'A1:{ultima_coluna_letra}1')
+                titulo = worksheet['A1']
+                titulo.value = f"RELATÓRIO DE FRETES - {nome.upper()}"
+                titulo.font = Font(size=16, bold=True, color="FFFFFF")
+                titulo.fill = PatternFill(start_color="C00000", end_color="C00000", fill_type="solid")
+                titulo.alignment = Alignment(horizontal="center")
 
-            # Formato de moeda para colunas financeiras
-            if any(termo in col.lower() for termo in ['valor', 'frete', 'diaria', 'pedagio']):
-                # iter_rows garante que sempre tenhamos um iterável, evitando o erro de 'tuple'
-                for row in worksheet.iter_rows(min_row=4, min_col=idx+1, max_col=idx+1, max_row=len(df)+3):
-                    for cell in row:
-                        cell.number_format = 'R$ #,##0.00'
+                # 3. Formatação dos Cabeçalhos (Linha 3)
+                for cell in worksheet[3]:
+                    cell.font = Font(bold=True, color="FFFFFF")
+                    cell.fill = PatternFill(start_color="2F3542", end_color="2F3542", fill_type="solid")
+
+                # 4. Ajuste de Largura e Moeda
+                for idx, col in enumerate(df_filtrado.columns):
+                    col_letter = get_column_letter(idx + 1)
+                    
+                    # Ajuste de largura
+                    max_len = max(df_filtrado[col].astype(str).map(len).max(), len(col)) + 4
+                    worksheet.column_dimensions[col_letter].width = max_len
+
+                    # Formato de moeda
+                    if any(termo in col.lower() for termo in ['valor', 'frete', 'acrescimo']):
+                        for row in worksheet.iter_rows(min_row=4, min_col=idx+1, max_col=idx+1, max_row=len(df_filtrado)+3):
+                            for cell in row:
+                                cell.number_format = 'R$ #,##0.00'
 
         output.seek(0)
         return send_file(
             output,
             mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            download_name='Relatorio_Financeiro_Frescatto.xlsx',
+            download_name='Relatorio_Por_Responsavel.xlsx',
             as_attachment=True
         )
     except Exception as e:
-        # Se der erro, o navegador mostrará exatamente o que aconteceu
-        return f"Erro ao gerar o arquivo: {str(e)}", 500
+        return f"Erro ao gerar o arquivo: {str(e)}", 500500
 
 @app.route("/api/exportar-devolucoes")
 def exportar_devolucoes_excel():

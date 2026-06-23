@@ -407,12 +407,11 @@ def processar_imagem():
 # EMISSÃO DE PDF ADAPTADO (NOVA TABELA)
 # ==================================
 
-@app.route("/relatorio/intervalo/pdf")
-def relatorio_pdf():
+##@app.route("/relatorio/intervalo/pdf")
+##def relatorio_pdf():
     inicio = request.args.get("inicio") or "2000-01-01"
     fim = request.args.get("fim") or "2100-12-31"
 
-    y = 800
 
     rotas = db_rotas
     canhotos = db_canhotos

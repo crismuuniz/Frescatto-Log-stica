@@ -412,6 +412,8 @@ def relatorio_pdf():
     inicio = request.args.get("inicio") or "2000-01-01"
     fim = request.args.get("fim") or "2100-12-31"
 
+    y = 800
+
     rotas = db_rotas
     canhotos = db_canhotos
     devolucoes = db_devolucoes
@@ -436,8 +438,6 @@ for r in rotas:
 
     buffer = io.BytesIO()
     pdf = canvas.Canvas(buffer, pagesize=A4)
-
-    y = 800
 
     pdf.setFont("Helvetica-Bold", 14)
     pdf.drawString(

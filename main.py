@@ -434,7 +434,6 @@ for r in rotas:
 
     resumo_motoristas = list(resumo.values())
 
-    resumo_motoristas = []
     buffer = io.BytesIO()
     pdf = canvas.Canvas(buffer, pagesize=A4)
 

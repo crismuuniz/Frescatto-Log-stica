@@ -240,10 +240,55 @@
                 </tr>
             </thead>
             <tbody id="lista"></tbody>
+            <tr/>
+
+            tbody.innerHTML += `
+            <tr>
+             <td>${item.data || ""}</td>
+             <td>${item.motorista || ""}</td>
+             <td>${item.placa || ""}</td>
+             <td>${item.modelo_veiculo || ""}</td>
+             <td>${item.entregas || ""}</td>
+             <td>${item.descricao_rota || ""}</td>
+             <td>R$ ${(parseFloat(item.frete)||0).toFixed(2)}</td>
+             <td>R$ ${(parseFloat(item.acrescimo)||0).toFixed(2)}</td>
+             <td>R$ ${valorFinal.toFixed(2)}</td>
+             <td>${item.responsavel || ""}</td>
+
+`;
         </table>
     </div>
 
 </div>
+
+async function carregarFretes() {
+    const res = await fetch("/api/roteiros");
+    const dados = await res.json();
+
+    const tbody = document.getElementById("lista");
+    tbody.innerHTML = "";
+
+    dados.forEach(item => {
+        const valorFinal =
+            (parseFloat(item.frete) || 0) +
+            (parseFloat(item.acrescimo) || 0);
+
+        tbody.innerHTML += `
+            <tr>
+                <td>${item.data || ""}</td>
+                <td>${item.motorista || ""}</td>
+                <td>${item.placa || ""}</td>
+                <td>${item.modelo_veiculo || ""}</td>
+                <td>${item.entregas || ""}</td>
+                <td>${item.descricao_rota || ""}</td>
+                <td>R$ ${(parseFloat(item.frete)||0).toFixed(2)}</td>
+                <td>R$ ${(parseFloat(item.acrescimo)||0).toFixed(2)}</td>
+            </tr>
+        `;
+    });
+}
+
+carregarFretes();
 
 <script>
     const API = "/api/canhotos";

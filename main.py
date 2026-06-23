@@ -2,15 +2,12 @@ import os
 import io
 import re
 import pandas as pd
-import reportlab
 import pytesseract
-import sqlite3
 
 from flask import Flask, request, jsonify, render_template, send_file
-from flask_sqlalchemy import SQLAlchemy
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
-from PIL import Image, ImageEnhance, ImageOps
+from PIL import Image
 
 from openpyxl.styles import Font, PatternFill, Alignment
 from openpyxl.utils import get_column_letter
@@ -25,12 +22,8 @@ os.environ['TESSDATA_PREFIX'] = '/usr/share/tesseract-ocr/4.00/tessdata'
 if os.path.exists('/usr/bin/tesseract'):
     pytesseract.pytesseract.tesseract_cmd = '/usr/bin/tesseract'
 
-app = Flask(__name__)
 
-# Se estiver rodando localmente no Windows e precisar apontar o Tesseract, mude aqui:
-# pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
-##TARIFAS REGRA DE NEGÓCIO (PAGAMENTO POR KM)
-# ==================================
+app = Flask(__name__)
 
 # ==================================
 # TABELA DE TARIFAS E REGRA DE NEGÓCIO (PAGAMENTO POR KM)
@@ -178,74 +171,6 @@ def calcular_frete_por_veiculo(veiculo, rota, km=0, pedagio=0, diaria=0):
     
 
 
-# ==================================
-# SQLITE CONFIGURAÇÃO (ESTRUTURA PLANILHA FRESCATTO)
-# ==================================
-
-def get_db():
-    # Corrigido: adicionada a conexão ao banco que estava faltando
-    conn = sqlite3.connect("/tmp/database.db")
-    conn.row_factory = sqlite3.Row
-    return conn
-
-
-def init_db():
-    conn = get_db()
-    cursor = conn.cursor()
-
-    # TABELA UNIFICADA: Estrutura real da planilha de rotas
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS rotas (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        carga TEXT,
-        data_carga TEXT,        -- Formato ISO: AAAA-MM-DD
-        motorista TEXT,
-        placa TEXT,
-        veiculo TEXT,
-        codigo_roteiro TEXT,    -- CÓD. ROT
-        descricao_rota TEXT,    -- DESC. ROTA
-        valor_coleta REAL,      -- VALOR COLET
-        quantidade_entregas INTEGER, -- ENTREGAS
-        peso REAL,
-        volume REAL,
-        valor_carga REAL,
-        km REAL,
-        pedagio REAL,
-        diaria REAL,
-        valor_frete REAL        -- VALOR FRETE (Faturamento calculado)
-    )
-    """)
-
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS canhotos (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        nota_fiscal TEXT,
-        cliente TEXT,
-        carga TEXT,
-        data_entrega TEXT,
-        status TEXT
-    )
-    """)
-
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS devolucoes (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        nota_fiscal TEXT,
-        cliente TEXT,
-        motivo TEXT,
-        data TEXT,
-        status TEXT
-    )
-    """)
-
-    conn.commit()
-    conn.close()
-
-
-# Executa a inicialização do banco
-init_db()
-# ==================================
-
 
 # ROTAS DE NAVEGAÇÃO (PÁGINAS)
 # ==================================
@@ -273,18 +198,12 @@ def devolucoes_page():
 
 @app.route("/relatorios")
 def relatorios_page():
-    conn = get_db()
-    rotas = conn.execute("SELECT * FROM rotas").fetchall()
-    canhotos = conn.execute("SELECT * FROM canhotos").fetchall()
-    devolucoes = conn.execute("SELECT * FROM devolucoes").fetchall()
-    conn.close()
-
     return render_template(
         "relatorios.html",
         data="Relatório geral",
-        rotas=rotas,
-        canhotos=canhotos,
-        devolucoes=devolucoes
+        rotas=db_rotas,
+        canhotos=db_canhotos,
+        devolucoes=db_devolucoes
     )
 
 # ==================================
@@ -294,11 +213,24 @@ def relatorios_page():
 @app.route("/api/roteiros", methods=["POST"])
 def adicionar_roteiro():
     dados = request.json
-    if not dados:
-        return jsonify({"status": "erro"}), 400
-    dados['id'] = len(db_rotas) + 1
+
+    dados["id"] = len(db_rotas) + 1
+
+    dados["frete"] = float(dados.get("frete", 0))
+    dados["acrescimo"] = float(dados.get("acrescimo", 0))
+
+    dados["valor_total"] = (
+        dados["frete"] +
+        dados["acrescimo"]
+    )
+
     db_rotas.append(dados)
-    return jsonify({"status": "sucesso", "id": dados['id']}), 201
+
+    return jsonify({
+        "status": "sucesso",
+        "id": dados["id"],
+        "valor_total": dados["valor_total"]
+    }), 201
 
 # Rota para você visualizar o que foi salvo (útil para conferência)
 @app.route("/api/roteiros", methods=["GET"])
@@ -306,63 +238,30 @@ def get_roteiros():
     return jsonify(db_rotas)
 
 
-# PUT: Atualiza as informações recalculando o valor total (Frete + Acréscimo)
 @app.route("/api/roteiros/<int:id>", methods=["PUT"])
 @app.route("/api/fretes/<int:id>", methods=["PUT"])
 def update_rota(id):
     dados = request.json
-    conn = get_db()
 
-    # Coleta de dados
-    modelo_veiculo = dados.get("modelo_veiculo")
-    frete_base = float(dados.get("frete") or 0)
-    acrescimo = float(dados.get("acrescimo") or 0)
-    descricao_rota = dados.get("descricao_rota")
-    observacoes = dados.get("observacoes", "")
-    responsavel = dados.get("responsavel")
+    for rota in db_rotas:
+        if rota.get("id") == id:
 
-    
-    # Cálculo
-    valor_final = frete_base + acrescimo
+            rota.update(dados)
 
-    # Execução única do UPDATE
-    conn.execute("""
-        UPDATE rotas SET
-            data_carga = ?, 
-            motorista = ?, 
-            placa = ?, 
-            modelo_veiculo = ?,
-            romaneio = ?, 
-            descricao_rota = ?, 
-            quantidade_entregas = ?, 
-            peso = ?, 
-            frete = ?, 
-            acrescimo = ?, 
-            valor_frete = ?,
-            observacoes = ?,
-            responsavel = ?
+            frete = float(rota.get("frete", 0))
+            acrescimo = float(rota.get("acrescimo", 0))
 
-        WHERE id = ?
-    """, (
-        dados.get("data"),
-        dados.get("motorista"), 
-        dados.get("placa"), 
-        dados.get ("modelo_veiculo"),
-        dados.get("romaneio"), 
-        dados.get("descricao_rota"), 
-        dados.get("entregas", 0), 
-        dados.get("peso"), 
-        frete_base, 
-        acrescimo, 
-        valor_final,
-        observacoes,
-        responsavel,
-        id
-    ))
+            rota["valor_total"] = frete + acrescimo
 
-    conn.commit()
-    conn.close()
-    return jsonify({"status": "ok", "valor_final": valor_final})
+            return jsonify({
+                "status": "ok",
+                "valor_total": rota["valor_total"]
+            })
+
+    return jsonify({
+        "status": "erro",
+        "mensagem": "Rota não encontrada"
+    }), 404
 
 
 # ==================================
@@ -383,10 +282,8 @@ def add_canhoto():
 
 @app.route("/api/canhotos/<int:id>", methods=["DELETE"])
 def delete_canhoto(id):
-    conn = get_db()
-    conn.execute("DELETE FROM canhotos WHERE id = ?", (id,))
-    conn.commit()
-    conn.close()
+    global db_canhotos
+    db_canhotos = [c for c in db_canhotos if c.get("id") != id]
     return jsonify({"status": "ok"})
 
 
@@ -406,43 +303,48 @@ def add_devolucao():
     db_devolucoes.append(dados)
     return jsonify({"status": "ok"}), 201
 
-
 @app.route("/api/devolucoes/<int:id>", methods=["PUT"])
 def update_devolucao(id):
     dados = request.json
-    conn = get_db()
 
-    conn.execute("""
-        UPDATE devolucoes
-        SET
-            nota_fiscal = ?,
-            cliente = ?,
-            motivo = ?,
-            data = ?,
-            status = ?
-        WHERE id = ?
-    """, (
-        dados.get("nota_fiscal"),
-        dados.get("cliente"),
-        dados.get("motivo"),
-        dados.get("data"),
-        dados.get("status"),
-        id
-    ))
+    for devolucao in db_devolucoes:
+        if devolucao.get("id") == id:
 
-    conn.commit()
-    conn.close()
+            devolucao["nota_fiscal"] = dados.get(
+                "nota_fiscal",
+                devolucao.get("nota_fiscal")
+            )
 
-    return jsonify({"status": "ok"})
+            devolucao["motivo"] = dados.get(
+                "motivo",
+                devolucao.get("motivo")
+            )
+
+            devolucao["status"] = dados.get(
+                "status",
+                devolucao.get("status")
+            )
+
+            devolucao["observacoes"] = dados.get(
+                "observacoes",
+                devolucao.get("observacoes")
+            )
+
+            return jsonify({
+                "status": "ok",
+                "mensagem": "Devolução atualizada com sucesso"
+            })
+
+    return jsonify({
+        "status": "erro",
+        "mensagem": "Devolução não encontrada"
+    }), 404
 
 
 @app.route("/api/devolucoes/<int:id>", methods=["DELETE"])
 def delete_devolucao(id):
-    conn = get_db()
-    conn.execute("DELETE FROM devolucoes WHERE id = ?", (id,))
-    conn.commit()
-    conn.close()
-
+    global db_devolucoes
+    db_devolucoes = [d for d in db_devolucoes if d.get("id") != id]
     return jsonify({"status": "ok"})
 
 
@@ -510,36 +412,29 @@ def relatorio_pdf():
     inicio = request.args.get("inicio") or "2000-01-01"
     fim = request.args.get("fim") or "2100-12-31"
 
-    conn = get_db()
+    rotas = db_rotas
+    canhotos = db_canhotos
+    devolucoes = db_devolucoes
 
-    rotas = conn.execute(
-        "SELECT * FROM rotas WHERE data_carga BETWEEN ? AND ?",
-        (inicio, fim)
-    ).fetchall()
+    resumo = {}
 
-    canhotos = conn.execute(
-        "SELECT * FROM canhotos WHERE data_entrega BETWEEN ? AND ?",
-        (inicio, fim)
-    ).fetchall()
+for r in rotas:
+    motorista = r.get("motorista", "Sem motorista")
+    valor = float(r.get("frete", 0))
 
-    devolucoes = conn.execute(
-        "SELECT * FROM devolucoes WHERE data BETWEEN ? AND ?",
-        (inicio, fim)
-    ).fetchall()
+    if motorista not in resumo:
+        resumo[motorista] = {
+            "motorista": motorista,
+            "viagens": 0,
+            "total": 0
+        }
 
-    resumo_motoristas = conn.execute("""
-        SELECT
-            motorista,
-            COUNT(*) AS viagens,
-            SUM(valor_frete) AS total
-        FROM rotas
-        WHERE data_carga BETWEEN ? AND ?
-        GROUP BY motorista
-        ORDER BY total DESC
-    """, (inicio, fim)).fetchall()
+    resumo[motorista]["viagens"] += 1
+    resumo[motorista]["total"] += valor
 
-    conn.close()
+    resumo_motoristas = list(resumo.values())
 
+    resumo_motoristas = []
     buffer = io.BytesIO()
     pdf = canvas.Canvas(buffer, pagesize=A4)
 
@@ -578,10 +473,11 @@ def relatorio_pdf():
         "MOVIMENTAÇÃO DE ROTAS E FRETES",
         rotas,
         lambda r: (
-            f"Carga: {r['carga']} | "
-            f"{r['motorista']} | "
-            f"{r['descricao_rota']} | "
-            f"Frete: R$ {r['valor_frete']:.2f}"
+            f"Carga: {r.get('carga','')} | "
+            f"{r.get('motorista','')} | "
+            f"{r.get('descricao_rota','')} | "
+            f"Frete: R$ {float(r.get('frete',0)):.2f}"
+            
         )
     )
 
@@ -659,10 +555,7 @@ def exportar_excel():
         inicio = request.args.get("inicio") or "2000-01-01"
         fim = request.args.get("fim") or "2100-12-31"
 
-        conn = get_db()
-        query = "SELECT * FROM rotas WHERE data_carga BETWEEN ? AND ?"
-        df = pd.read_sql_query(query, conn, params=(inicio, fim))
-        conn.close()
+        df = pd.DataFrame(db_rotas)
 
         if df.empty:
             return "Nenhum dado encontrado.", 404
@@ -673,8 +566,11 @@ def exportar_excel():
 
             for nome in responsaveis:
                 # Filtra o dataframe para cada responsável
-                df_filtrado = df[df['responsavel'] == nome]
+                if 'responsavel' not in df.columns:
+                 return "Coluna responsavel não encontrada.", 400
                 
+                df_filtrado = df[df['responsavel'] == nome]
+
                 # Se não houver dados para o responsável, pula a aba
                 if df_filtrado.empty:
                     continue
@@ -729,10 +625,8 @@ def exportar_devolucoes_excel():
         inicio = request.args.get("inicio") or "2000-01-01"
         fim = request.args.get("fim") or "2100-12-31"
 
-        conn = get_db()
-        query = "SELECT * FROM devolucoes WHERE data BETWEEN ? AND ?"
-        df = pd.read_sql_query(query, conn, params=(inicio, fim))
-        conn.close()
+        df = pd.DataFrame(db_devolucoes)
+
 
         if df.empty:
             return "Nenhuma devolução encontrada no período.", 404
@@ -780,14 +674,25 @@ def exportar_roteiros_excel():
         fim = request.args.get("fim") or "2100-12-31"
 
         # 1. Converte a lista em memória para um DataFrame
-        if not db_roteiros_memoria:
+        if not db_rotas:
             return "Nenhum roteiro encontrado na memória.", 404
             
-        df = pd.DataFrame(db_roteiros_memoria)
+        df = pd.DataFrame(db_rotas)
 
         # 2. Filtra pelo período (garantindo que a coluna seja tratada como data)
-        df['data_carga'] = pd.to_datetime(df['data_carga'])
-        df_filtrado = df[(df['data_carga'] >= inicio) & (df['data_carga'] <= fim)].copy()
+        if 'data' not in df.columns:
+         return "Campo data não encontrado.", 400
+
+        inicio = pd.to_datetime(inicio)
+        fim = pd.to_datetime(fim)
+
+        df['data'] = pd.to_datetime(df['data'], errors='coerce')
+        df = df.dropna(subset=['data'])
+        df_filtrado = df[
+            (df['data'] >= inicio) &
+            (df['data'] <= fim)
+        ]
+
 
         if df_filtrado.empty:
             return "Nenhum roteiro encontrado no período.", 404
@@ -838,7 +743,7 @@ def salvar_dados():
     # e salvar no seu SQLite (database.db)
     
     print("Texto recebido do frontend:", texto)
-    return jsonify({"status": "sucesso", "mensagem": "Dados gravados no banco!"}), 200
+    return jsonify({"status": "sucesso", "mensagem": "Dados processados com sucesso!"}), 200
         
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 3000)))
